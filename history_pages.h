@@ -86,7 +86,7 @@ namespace daw {
 				return std::make_tuple<uint8_t, size_t, size_t>( this->opcode( ), this->size( ), this->timestamp_offset( ) );
 			}
 
-			boost::optional<timestamp_t> timestamp( ) const {
+			virtual boost::optional<timestamp_t> timestamp( ) const {
 				switch( timestamp_size( ) ) {
 					case 2:
 						return timestamp_t::parse_date( m_data.slice( child->m_timestamp_offset ) );
@@ -110,11 +110,11 @@ namespace daw {
 				return m_data;
 			}
 
-			daw::range::Range & size( ) {
+			virtual daw::range::Range & size( ) {
 				return m_size;
 			}	
 
-			daw::range::Range const & size( ) const {
+			virtual daw::range::Range const & size( ) const {
 				return m_size;
 			}
 		};	// history_entry_obj
@@ -186,53 +186,66 @@ namespace daw {
 		using hist_clear_alarm = history_entry_static<0x0C>;
 		using hist_select_basal_profile = history_entry_static<0x14>;
 		using hist_temp_basal_duration = history_entry_static<0x16>;
+		using hist_change_time = history_entry_static<0x17, 14, 9>;
+		using hist_journal_entry_pump_low_battery = history_entry_static<0X19>;
+		using hist_battery = history_entry_static<0X1A>;
+		using hist_suspend = history_entry_static<0X1E>;
+		using hist_resume = history_entry_static<0X1F>;
+		using hist_rewind = history_entry_static<0X21>;
+		using hist_change_child_block_enable = history_entry_static<0X23>;
+		using hist_change_max_bolus = history_entry_static<0X24>;
+		using hist_enable_disable_remote = history_entry_static<0X26, 21>;
+		using hist_change_max_basal = history_entry_static<0X2C>;
+		using hist_change_bg_reminder_offset = history_entry_static<0X31>;
+		using hist_change_alarm_clock_time = history_entry_static<0X32, 14>;
+		using hist_temp_basal = history_entry_static<0X33, 8>;
+		using hist_pump_low_reservoir = history_entry_static<0X34>;
+		using hist_alarm_clock_reminder = history_entry_static<0X35>;
+		using hist_questionable_3b = history_entry_static<0X3B>;
+		using hist_change_paradigm_linkid = history_entry_static<0X3C, 21>;
+		using hist_bg_received = history_entry_static<0X3F, 10>;
+		using hist_exercise_marker = history_entry_static<0X41, 8>;
 
-    case ChangeTime = 0x17
-    case JournalEntryPumpLowBattery = 0x19
-    case Battery = 0x1a
-    case Suspend = 0x1e
-    case Resume = 0x1f
-    case Rewind = 0x21
-    case ChangeChildBlockEnable = 0x23
-    case ChangeMaxBolus = 0x24
-    case EnableDisableRemote = 0x26
-    case ChangeMaxBasal = 0x2c
-    case ChangeBGReminderOffset = 0x31
-    case ChangeAlarmClockTime = 0x32
-    case TempBasal = 0x33
-    case JournalEntryPumpLowReservoir = 0x34
-    case AlarmClockReminder = 0x35
-    case Questionable3b = 0x3b
-    case ChangeParadigmLinkID = 0x3c
-    case BGReceived = 0x3f
-    case JournalEntryExerciseMarker = 0x41
-    case ChangeSensorSetup2 = 0x50
-    case ChangeSensorRateOfChangeAlertSetup = 0x56
-    case ChangeBolusScrollStepSize = 0x57
-    case ChangeBolusWizardSetup = 0x5a
-    case BolusWizardBolusEstimate = 0x5b
-    case UnabsorbedInsulin = 0x5c
-    case ChangeVariableBolus = 0x5e
-    case ChangeAudioBolus = 0x5f
-    case ChangeBGReminderEnable = 0x60
-    case ChangeAlarmClockEnable = 0x61
-    case ChangeTempBasalType = 0x62
-    case ChangeAlarmNotifyMode = 0x63
-    case ChangeTimeFormat = 0x64
-    case ChangeReservoirWarningTime = 0x65
-    case ChangeBolusReminderEnable = 0x66
-    case ChangeBolusReminderTime = 0x67
-    case DeleteBolusReminderTime = 0x68
-    case DeleteAlarmClockTime = 0x6a
-    case Model522ResultTotals = 0x6d
-    case Sara6E = 0x6e
-    case ChangeCarbUnits = 0x6f
-    case BasalProfileStart = 0x7b
-    case ChangeWatchdogEnable = 0x7c
-    case ChangeOtherDeviceID = 0x7d
-    case ChangeWatchdogMarriageProfile = 0x81
-    case DeleteOtherDeviceID = 0x82
-    case ChangeCaptureEventEnable = 0x83
+		using hist_change_sensor_rate_of_change_alert_setup = history_entry_static<0X56, 12>;
+		using hist_change_bolus_scroll_step_size = history_entry_static<0X57>;
+
+		struct hist_change_bolus_wizard_setup: public history_entry<hist_result_daily_total, 0x5A> {
+			hist_change_bolus_wizard_setup( daw::range::Range data, pump_model_t pump_model ):
+					history_entry<hist_result_daily_total>{ this, std::move( data ),  pump_model.larger ? 144 : 124 } { } 
+		};	// hist_change_bolus_wizard_setup
+
+		struct hist_change_bolus_wizard_setup: public history_entry<hist_result_daily_total, 0x5B> {
+			hist_change_bolus_wizard_setup( daw::range::Range data, pump_model_t pump_model ):
+					history_entry<hist_result_daily_total>{ this, std::move( data ),  pump_model.larger ? 22 : 20 } { } 
+		};	// hist_change_bolus_wizard_setup
+
+		struct hist_unabsorbed_insulin: public history_entry<hist_result_daily_total, 0x5C> {
+			hist_unabsorbed_insulin( daw::range::Range data, pump_model_t pump_model ):
+					history_entry<hist_result_daily_total>{ this, std::move( data ),  std::max( data[1], 2 ) } { } 
+		};	// hist_unabsorbed_insulin
+
+		using hist_change_variable_bolus = history_entry_static<0X5E>;
+		using hist_change_audio_bolus = history_entry_static<0X5F>;
+		using hist_change_bg_reminder_enable = history_entry_static<0X60>;
+		using hist_change_alarm_clock_enable = history_entry_static<0X61>;
+		using hist_change_temp_basal_type = history_entry_static<0X62>;
+		using hist_change_alarm_notify_mode = history_entry_static<0X63>;
+		using hist_change_time_format = history_entry_static<0X64>;
+		using hist_change_reservoir_warning_time = history_entry_static<0X65>;
+		using hist_change_bolus_reminder_enable = history_entry_static<0X66>;
+		using hist_change_bolus_reminder_time = history_entry_static<0X67>;
+		using hist_delete_bolus_reminder_time = history_entry_static<0X68, 9>;
+		using hist_delete_alarm_clock_time = history_entry_static<0X6A, 14>;
+		using hist_model522resulttotals = history_entry_static<0X6D, 44, 1, 2>;
+		using hist_sara_6e = history_entry_static<0X6E, 52, 1, 2>;
+		using hist_change_carb_units = history_entry_static<0X6F>;
+		using hist_basal_profile_start = history_entry_static<0X7B, 10>;
+		using hist_change_watch_dog_enable = history_entry_static<0X7C>;
+		using hist_change_other_device_id = history_entry_static<0X7D, 37>;
+		using hist_change_watch_dog_marriage_profile = history_entry_static<0X81, 12>;
+		using hist_delete_other_device_id = history_entry_static<0X82, 12>;
+		using hist_change_capture_event_enable = history_entry_static<0X83>;
+
 	}	// namespace history
 }	// namespace daw
 
