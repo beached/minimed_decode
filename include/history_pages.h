@@ -124,9 +124,9 @@ namespace daw {
 		class history_entry_static: public history_entry<history_entry_static<child_opcode, child_size, child_timestamp_offset>, child_opcode> {
 			static size_t const m_timestamp_offset = child_timestamp_offset;
 			static size_t const m_timestamp_size = child_timestamp_size;
-			
+		public:	
 			history_entry_static( data_source_t data, pump_model_t pump_model ):
-					history_entry<history_entry_static<child_opcode, child_size, child_timestamp_offset>, child_opcode>{ *this, std::move( data ), child_size, std::move( pump_model ) } { }
+				history_entry<history_entry_static<child_opcode, child_size, child_timestamp_offset>, child_opcode>{ *this, std::move( data ), child_size, std::move( pump_model ) } { }
 
 			virtual ~history_entry_static( ) = default;
 			history_entry_static( history_entry_static const & ) = default;
@@ -196,18 +196,22 @@ namespace daw {
 
 		struct hist_change_sensor_setup: public history_entry<hist_change_sensor_setup, 0x50> {
 			hist_change_sensor_setup( data_source_t data, pump_model_t pump_model );
+			virtual ~hist_change_sensor_setup( );
 		};	// hist_change_sensor_setup
 
 		struct hist_change_bolus_wizard_setup: public history_entry<hist_change_bolus_wizard_setup, 0x5A> {
 			hist_change_bolus_wizard_setup( data_source_t data, pump_model_t pump_model );
+			virtual ~hist_change_bolus_wizard_setup( );
 		};	// hist_change_bolus_wizard_setup
 
 		struct hist_change_bolus_wizard_estimate: public history_entry<hist_change_bolus_wizard_estimate, 0x5B> {
 			hist_change_bolus_wizard_estimate( data_source_t data, pump_model_t pump_model );
+			virtual ~hist_change_bolus_wizard_estimate( );
 		};	// hist_change_bolus_wizard_estimate
 
 		struct hist_unabsorbed_insulin: public history_entry<hist_unabsorbed_insulin, 0x5C> {
 			hist_unabsorbed_insulin( data_source_t data, pump_model_t pump_model );
+			virtual ~hist_unabsorbed_insulin( );
 		};	// hist_unabsorbed_insulin
 
 		using hist_change_variable_bolus = history_entry_static<0X5E>;
