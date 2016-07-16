@@ -40,15 +40,15 @@ namespace daw {
 		}	// namespace anonymous
 
 		pump_model_t::pump_model_t( std::string const & model ):
-				generation( convert_to<uint16_t>( model )%100u ),
-				larger{ generation >= 23 }, 
-				has_low_suspend{ generation >= 51 },
-				strokes_per_unit( generation >= 23 ? 40 : 10 ) { }
+			generation( convert_to<uint16_t>( model ) % 100u ),
+			larger { generation >= 23 },
+			has_low_suspend { generation >= 51 },
+			strokes_per_unit( generation >= 23 ? 40 : 10 ) { }
 
-		history_entry_obj::history_entry_obj( data_source_t data, size_t data_size, pump_model_t ): 
-				m_opcode{ data[0] },
-				m_data{ data.shrink( data_size ) },
-				m_size{ data_size } { }
+		history_entry_obj::history_entry_obj( data_source_t data, size_t data_size, pump_model_t ):
+			m_opcode { data[0] },
+			m_data { data.shrink( data_size ) },
+			m_size { data_size } { }
 
 		history_entry_obj::~history_entry_obj( ) { };
 
@@ -68,12 +68,12 @@ namespace daw {
 		}
 
 		uint8_t history_entry_obj::opcode( ) const {
-			return m_opcode;	
+			return m_opcode;
 		}
-			
+
 		data_source_t & history_entry_obj::data( ) {
 			return m_data;
-		}	
+		}
 
 		data_source_t const & history_entry_obj::data( ) const {
 			return m_data;
@@ -81,7 +81,7 @@ namespace daw {
 
 		size_t & history_entry_obj::size( ) {
 			return m_size;
-		}	
+		}
 
 		size_t const & history_entry_obj::size( ) const {
 			return m_size;
@@ -97,7 +97,7 @@ namespace daw {
 		timestamp_t timestamp_t::parse_timestamp( data_source_t arry ) {
 			assert( arry.size( ) >= 5 );
 			timestamp_t result;
-			result.time = time_t{ };
+			result.time = time_t { };
 			result.time->second = arry[0] & 0b00111111;
 			result.time->minute = arry[1] & 0b00111111;
 			result.time->hour = arry[2] & 0b00011111;
@@ -108,20 +108,20 @@ namespace daw {
 		}
 
 		timestamp_t timestamp_t::parse_date( data_source_t arry ) {
-			assert( arry.size( ) >= 2 ); 
+			assert( arry.size( ) >= 2 );
 			timestamp_t result;
 			result.date.day = arry[0] & 0b00011111;
 			result.date.month = ((arry[0] & 0b11100000) >> 4) + ((arry[1] & 0b10000000) >> 7);
 			result.date.year = 2000 + (arry[1] & 0b01111111);
-			return result;	
+			return result;
 		}
 
 		hist_bolus_normal::hist_bolus_normal( data_source_t data, pump_model_t pump_model ):
 			history_entry<hist_bolus_normal, 0x01>( this, std::move( data ), pump_model.larger ? 13 : 9, std::move( pump_model ) ),
 			m_timestamp_offset( pump_model.larger ? 8 : 4 ) { }
-		
+
 		hist_result_daily_total::hist_result_daily_total( data_source_t data, pump_model_t pump_model ):
-			history_entry<hist_result_daily_total, 0x07>( this, std::move( data ),  pump_model.larger ? 10 : 7, std::move( pump_model ) ),
+			history_entry<hist_result_daily_total, 0x07>( this, std::move( data ), pump_model.larger ? 10 : 7, std::move( pump_model ) ),
 			m_timestamp_offset( pump_model.larger ? 8 : 4 ) { }
 
 
@@ -129,19 +129,19 @@ namespace daw {
 			history_entry<hist_change_sensor_setup, 0x50>( this, std::move( data ), pump_model.has_low_suspend ? 41 : 37, std::move( pump_model ) ) { }
 
 		hist_change_bolus_wizard_setup::hist_change_bolus_wizard_setup( data_source_t data, pump_model_t pump_model ):
-			history_entry<hist_change_bolus_wizard_setup, 0x5A>( this, std::move( data ),  pump_model.larger ? 144 : 124, std::move( pump_model ) ) { } 
+			history_entry<hist_change_bolus_wizard_setup, 0x5A>( this, std::move( data ), pump_model.larger ? 144 : 124, std::move( pump_model ) ) { }
 
 		hist_change_bolus_wizard_estimate::hist_change_bolus_wizard_estimate( data_source_t data, pump_model_t pump_model ):
-				history_entry<hist_change_bolus_wizard_estimate, 0x5B>{ this, std::move( data ), static_cast<size_t>(pump_model.larger ? 22 : 20), pump_model } { } 
+			history_entry<hist_change_bolus_wizard_estimate, 0x5B> { this, std::move( data ), static_cast<size_t>(pump_model.larger ? 22 : 20), pump_model } { }
 
 		hist_unabsorbed_insulin::hist_unabsorbed_insulin( data_source_t data, pump_model_t pump_model ):
-				history_entry<hist_unabsorbed_insulin, 0x5C>( this, std::move( data ), (data[1] > 2 ? data[1] : 2), std::move( pump_model ) ) { } 
+			history_entry<hist_unabsorbed_insulin, 0x5C>( this, std::move( data ), (data[1] > 2 ? data[1] : 2), std::move( pump_model ) ) { }
 
 		namespace {
 			template<typename ...Args>
 			std::unique_ptr<history_entry_obj> create_history_entry_impl( uint8_t opcode, Args&&... args ) {
 				return std::unique_ptr<history_entry_obj>( [&]( ) {
-				switch( opcode ) {
+					switch( opcode ) {
 					case 0X01: return new hist_bolus_normal( std::forward<Args>( args )... );
 					case 0X03: return new hist_prime( std::forward<Args>( args )... );
 					case 0X06: return new hist_alarm_pump( std::forward<Args>( args )... );
@@ -199,18 +199,21 @@ namespace daw {
 					case 0X81: return new hist_change_watch_dog_marriage_profile( std::forward<Args>( args )... );
 					case 0X82: return new hist_delete_other_device_id( std::forward<Args>( args )... );
 					case 0X83: return new hist_change_capture_event_enable( std::forward<Args>( args )... );
-					default: {
+					default:
+					{
 						return nullptr;
 					}
-				}
-			}( ) );
-		}
+					}
+				}() );
+			}
+		}	// namespace anonymous
 
 		std::unique_ptr<history_entry_obj> create_history_entry( data_source_t & data, pump_model_t pump_model ) {
 			auto result = create_history_entry_impl( data[0], data, std::move( pump_model ) );
 			if( data.size( ) < result->size( ) ) {
 				return nullptr;
 			}
+			using std::next;
 			next( data, result->size( ) );
 			return result;
 		}
