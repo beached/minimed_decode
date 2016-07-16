@@ -108,15 +108,7 @@ namespace daw {
 			history_entry( history_entry const & ) = default;
 			history_entry( history_entry && ) = default;
 			history_entry & operator=( history_entry const & ) = default;
-			history_entry & operator=( history_entry && ) = default;
-
-			size_t timestamp_offset( ) const override {
-				return child->m_timestamp_offset;
-			}
-		
-			size_t timestamp_size( ) const override {
-				return child->m_timestamp_size;
-			}
+			history_entry & operator=( history_entry && ) = default;			
 
 		};	// history_entry
 
@@ -133,6 +125,14 @@ namespace daw {
 			history_entry_static( history_entry_static && ) = default;
 			history_entry_static & operator=( history_entry_static const & ) = default;
 			history_entry_static & operator=( history_entry_static && ) = default;
+
+			size_t timestamp_offset( ) const override {
+				return m_timestamp_offset;
+			}
+
+			size_t timestamp_size( ) const override {
+				return m_timestamp_size;
+			}
 		};	// history_entry_static	
 
 		// Known History Entries in order of opcode
