@@ -95,7 +95,7 @@ int main( int argc, char** argv ) {
 	};
 
 	while( !range.at_end( ) ) {
-		std::cout << std::dec << std::dec << pos << "/" << v.size( )-1 << ": ";
+		std::cout << std::dec << std::dec << pos+1 << "/" << v.size( ) << ": ";
 		auto item = daw::history::create_history_entry( range, pump_model, pos );
 		if( item ) {
 			std::cout << *item;
@@ -113,7 +113,7 @@ int main( int argc, char** argv ) {
 			display( daw::range::make_range( v.data( ) + err_start, v.data( ) + pos - offset ) );
 			std::cout << " }\n";
 			if( !range.at_end( ) ) {
-				std::cout << std::dec << std::dec << (pos-offset) << "/" << v.size( )-1 << ": " << *item;
+				std::cout << std::dec << std::dec << (pos-offset)+1 << "/" << v.size( ) << ": " << *item;
 				entries.push_back( std::move( item ) );
 			}
 		}
