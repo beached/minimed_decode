@@ -41,7 +41,7 @@ auto current_year( ) {
 	auto t = std::chrono::system_clock::now( );
 	std::time_t now_c = std::chrono::system_clock::to_time_t( t );
 	struct tm *parts = std::localtime( &now_c );
-	uint16_t result = 1900 + parts->tm_year;
+	uint16_t result = static_cast<uint16_t>(1900 + parts->tm_year);	// Year 63635 issue
 	return result;
 }
 
@@ -50,7 +50,7 @@ std::string read_file( std::string file_name ) {
 	std::string result;
 
 	ifs.seekg( 0, std::ios::end );
-	result.reserve( ifs.tellg( ) );
+	result.reserve( static_cast<size_t>(ifs.tellg( )) );
 	ifs.seekg( 0, std::ios::beg );
 
 	result.assign( (std::istreambuf_iterator<char>( ifs )), std::istreambuf_iterator<char>( ) );

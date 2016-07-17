@@ -113,7 +113,7 @@ namespace daw {
 
 			template<typename T, typename U, typename R=T>
 			R max( T lhs, U rhs ) {
-				return lhs > rhs ? lhs : rhs;
+				return lhs > rhs ? static_cast<R>(lhs) : static_cast<R>(rhs);
 			}
 
 		}	// namespace anonymous
@@ -353,7 +353,7 @@ namespace daw {
 				return nullptr;
 			}
 			position += result->size( );
-			data.advance( result->size( ) );
+			data.advance( static_cast<data_source_t::difference_type>(result->size( )) );
 			return result;
 		}
 	}	// namespace history

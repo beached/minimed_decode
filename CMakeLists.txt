@@ -42,6 +42,7 @@ set( HEADER_FOLDER "include" )
 include_directories( ${HEADER_FOLDER} )
 
 set( HEADER_FILES
+	${HEADER_FOLDER}/history_pages_base.h
 	${HEADER_FOLDER}/history_pages.h
 )
 
