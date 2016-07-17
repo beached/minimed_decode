@@ -140,7 +140,7 @@ namespace daw {
 			history_entry<0x5C>( std::move( data ), (data[1] > 2 ? data[1] : 2), std::move( pump_model ) ) { }
 
 		namespace {
-			template<typename ...Args>
+			template<typename... Args>
 			std::unique_ptr<history_entry_obj> create_history_entry_impl( uint8_t opcode, Args&&... args ) {
 				return std::unique_ptr<history_entry_obj>( [&]( ) -> history_entry_obj* {
 					switch( opcode ) {

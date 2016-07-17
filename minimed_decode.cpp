@@ -36,12 +36,14 @@ int main( int argc, char** argv ) {
 	assert( argc > 2 );
 	daw::history::pump_model_t pump_model( argv[1] );
 	daw::filesystem::MemoryMappedFile<uint8_t> data( argv[2] );
-	auto range = daw::range::Range<uint8_t*>( (uint8_t*)data.begin( ), (uint8_t*)data.end( ) ); 
+	std::vector<uint8_t> v( data.size( ), (uint8_t)0 );
+	std::copy( data.begin( ), data.end( ), v.begin( ) );
+	auto range = daw::range::make_range( v );
 
 	std::vector<std::unique_ptr<daw::history::history_entry_obj>> entries;
 
 	while( !range.at_end( ) ) {
-		auto item = create_history_entry( range, pump_model );
+		auto item = daw::history::create_history_entry( range, pump_model );
 		if( item ) {
 			entries.push_back( std::move( item ) );
 		} else {
