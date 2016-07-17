@@ -30,7 +30,10 @@
 template<typename Data>
 void display( Data const & data ) {
 	for( auto it = data.begin( ); it != data.end( ); ++it ) {
-		std::cout << std::hex << std::setw( 2 ) << std::setfill( '0' ) << static_cast<int>(*it) << "  ";
+		if( it != data.begin( ) ) {
+			std::cout << " ";
+		}
+		std::cout << std::hex << std::setw( 2 ) << std::setfill( '0' ) << static_cast<int>(*it); 
 	}
 }
 
@@ -106,9 +109,9 @@ int main( int argc, char** argv ) {
 				++pos;
 			}
 			auto offset = item ? item->size( ) - 1 : 0;
-			std::cout << (pos-(err_start+offset)) << " ) { ";
+			std::cout << (pos-(err_start+offset)) << " ) { \033[1;31m";
 			display( daw::range::make_range( v.data( ) + err_start, v.data( ) + pos - offset ) );
-			std::cout << " }\n";
+			std::cout << "\033[0m }\n";
 			if( !range.at_end( ) ) {
 				std::cout << std::dec << std::dec << (pos-offset) << "/" << v.size( ) << ": " << *item;
 				entries.push_back( std::move( item ) );
