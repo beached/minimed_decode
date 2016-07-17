@@ -111,37 +111,24 @@ namespace daw {
 			history_entry( history_entry && ) = default;
 			history_entry & operator=( history_entry const & ) = default;
 			history_entry & operator=( history_entry && ) = default;			
-
 		};	// history_entry
 
 		template<uint8_t child_opcode, size_t child_size = 7, size_t child_timestamp_offset = 2, size_t child_timestamp_size = 5>
-		class history_entry_static: public history_entry<child_opcode> {
-			static size_t const m_timestamp_offset = child_timestamp_offset;
-			static size_t const m_timestamp_size = child_timestamp_size;
-		public:	
+		struct history_entry_static: public history_entry<child_opcode> {
 			history_entry_static( data_source_t data, pump_model_t pump_model ):
-				history_entry<child_opcode>{ std::move( data ), child_size, std::move( pump_model ) } { }
+				history_entry<child_opcode>{ std::move( data ), child_size, std::move( pump_model ), child_timestamp_offset, child_timestamp_size } { }
 
 			virtual ~history_entry_static( ) = default;
 			history_entry_static( history_entry_static const & ) = default;
 			history_entry_static( history_entry_static && ) = default;
 			history_entry_static & operator=( history_entry_static const & ) = default;
 			history_entry_static & operator=( history_entry_static && ) = default;
-
-			size_t timestamp_offset( ) const {
-				return m_timestamp_offset;
-			}
-
-			size_t timestamp_size( ) const {
-				return m_timestamp_size;
-			}
 		};	// history_entry_static	
 
 		// Known History Entries in order of opcode
 		using hist_skip = history_entry_static<0x00, 1, 0, 0>;
 
 		struct hist_bolus_normal: public history_entry<0x01> {
-			size_t m_timestamp_offset;
 			hist_bolus_normal( data_source_t data, pump_model_t pump_model );
 			virtual ~hist_bolus_normal( );
 			hist_bolus_normal( hist_bolus_normal const & ) = default;
@@ -155,13 +142,9 @@ namespace daw {
 		using hist_alarm_pump = history_entry_static<0x06, 9, 4>;
 
 		struct hist_result_daily_total: public history_entry<0x07> {
-			static size_t const m_timestamp_size = 2;
-			size_t m_timestamp_offset;
-
 			hist_result_daily_total( data_source_t data, pump_model_t pump_model );
 
 			virtual ~hist_result_daily_total( );
-
 			hist_result_daily_total( hist_result_daily_total const & ) = default;
 			hist_result_daily_total( hist_result_daily_total && ) = default;
 			hist_result_daily_total & operator=( hist_result_daily_total const & ) = default;
@@ -171,7 +154,7 @@ namespace daw {
 		using hist_change_basal_profile_pattern = history_entry_static<0x08, 152>;
 		using hist_change_basal_profile = history_entry_static<0x09, 152>;
 		using hist_cal_bg_for_ph = history_entry_static<0x0A>;
-		using hist_alarm_sensor = history_entry_static<0x0B, 8>;
+		using hist_alarm_sensor = history_entry_static<0x0B, 8, 3>;
 		using hist_clear_alarm = history_entry_static<0x0C>;
 		using hist_select_basal_profile = history_entry_static<0x14>;
 		using hist_temp_basal_duration = history_entry_static<0x16>;

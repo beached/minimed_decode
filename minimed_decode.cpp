@@ -29,7 +29,7 @@
 template<typename Data>
 void display( Data const & data ) {
 	for( auto it = data.begin( ); it != data.end( ); ++it ) {
-		std::cout << std::hex << std::setw( 2 ) << std::setfill( '0' ) << (int)*it << "  ";
+		std::cout << std::hex << std::setw( 2 ) << std::setfill( '0' ) << static_cast<int>(*it) << "  ";
 	}
 	std::cout << std::endl;
 }

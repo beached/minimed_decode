@@ -95,7 +95,6 @@ namespace daw {
 			}
 		}
 
-
 		namespace {
 			template<typename To, typename From>
 			To convert_to( From const & value ) {
@@ -110,6 +109,11 @@ namespace daw {
 				std::stringstream ss;
 				ss << std::hex << std::setfill( '0' ) << std::setw( 2 ) << static_cast<int>(val);
 				return ss.str( );
+			}
+
+			template<typename T, typename U, typename R=T>
+			R max( T lhs, U rhs ) {
+				return lhs > rhs ? lhs : rhs;
 			}
 
 		}	// namespace anonymous
@@ -146,6 +150,7 @@ namespace daw {
 
 		std::string history_entry_obj::to_string( ) const {
 			std::stringstream ss;
+			ss << op_string( this->opcode( ) );
 			ss << "<op: " << to_hex( this->opcode( ) );
 			ss << " size: " << this->size( );
 			ss << " ts_offset: " << this->timestamp_offset( );
@@ -180,9 +185,15 @@ namespace daw {
 		boost::optional<timestamp_t> history_entry_obj::timestamp( ) const {
 			switch( this->timestamp_size( ) ) {
 			case 2:
-				return timestamp_t::parse_date( m_data.slice( this->timestamp_offset( ) ) );
+				if( this->data( ).size( ) >= 2 ) {
+					return timestamp_t::parse_date( m_data.slice( this->timestamp_offset( ) ) );
+				} 
+				return boost::optional<timestamp_t>{ };
 			case 5:
-				return timestamp_t::parse_timestamp( m_data.slice( this->timestamp_offset( ) ) );
+				if( this->data( ).size( ) >= 5 ) {
+					return timestamp_t::parse_timestamp( m_data.slice( this->timestamp_offset( ) ) );
+				}
+				return boost::optional<timestamp_t>{ };
 			default:
 				return boost::optional<timestamp_t>{ };
 			}
@@ -246,13 +257,10 @@ namespace daw {
 		}
 
 		hist_bolus_normal::hist_bolus_normal( data_source_t data, pump_model_t pump_model ):
-			history_entry<0x01>( std::move( data ), pump_model.larger ? 13 : 9, std::move( pump_model ) ),
-			m_timestamp_offset( pump_model.larger ? 8 : 4 ) { }
+			history_entry<0x01>( std::move( data ), pump_model.larger ? 13 : 9, std::move( pump_model ), pump_model.larger ? 8 : 4 ) { }
 
 		hist_result_daily_total::hist_result_daily_total( data_source_t data, pump_model_t pump_model ):
-			history_entry<0x07>( std::move( data ), pump_model.larger ? 10 : 7, std::move( pump_model ) ),
-			m_timestamp_offset( pump_model.larger ? 8 : 4 ) { }
-
+			history_entry<0x07>( std::move( data ), pump_model.larger ? 10 : 7, std::move( pump_model ), pump_model.larger ? 8 : 4, 2 ) { }
 
 		hist_change_sensor_setup::hist_change_sensor_setup( data_source_t data, pump_model_t pump_model ):
 			history_entry<0x50>( std::move( data ), pump_model.has_low_suspend ? 41 : 37, std::move( pump_model ) ) { }
@@ -264,7 +272,7 @@ namespace daw {
 			history_entry<0x5B> { std::move( data ), static_cast<size_t>(pump_model.larger ? 22 : 20), pump_model } { }
 
 		hist_unabsorbed_insulin::hist_unabsorbed_insulin( data_source_t data, pump_model_t pump_model ):
-			history_entry<0x5C>( std::move( data ), (data[1] > 2 ? data[1] : 2), std::move( pump_model ) ) { }
+			history_entry<0x5C>( std::move( data ), max( data[1], 2 ), std::move( pump_model ), 1, 0 ) { }
 
 		namespace {
 			template<typename... Args>
@@ -335,6 +343,10 @@ namespace daw {
 							default: return nullptr;
 					}
 				}( std::forward<Args>(arg)... ) );
+				if( result ) {
+					std::cout << *result << "\n";
+				}
+				return result;
 			}
 		}	// namespace anonymous
 
