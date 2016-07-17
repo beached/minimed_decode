@@ -38,7 +38,7 @@ int main( int argc, char** argv ) {
 	daw::filesystem::MemoryMappedFile<uint8_t> data( argv[2] );
 	std::vector<uint8_t> v( data.size( ), (uint8_t)0 );
 	std::copy( data.begin( ), data.end( ), v.begin( ) );
-	auto range = daw::range::make_range( v );
+	auto range = daw::range::make_range( v.begin( ), v.end( ) );
 
 	std::vector<std::unique_ptr<daw::history::history_entry_obj>> entries;
 
