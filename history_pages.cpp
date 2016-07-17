@@ -226,7 +226,7 @@ namespace daw {
 				return nullptr;
 			}
 			using std::next;
-			next( data, result->size( ) );
+			data.safe_advance( result->size( ) );
 			return result;
 		}
 	}	// namespace history

@@ -21,8 +21,10 @@
 // SOFTWARE.
 
 #include "history_pages.h"
-#include <daw/daw_memory_mapped_file.h>
 #include <iostream>
+#include <streambuf>
+#include <fstream>
+#include <cstdlib>
 
 template<typename Data>
 void display( Data const & data ) {
@@ -32,14 +34,33 @@ void display( Data const & data ) {
 	std::cout << std::endl;
 }
 
+std::string read_file( std::string file_name ) {
+	std::ifstream ifs( file_name.c_str( ) );
+	std::string result;
+
+	ifs.seekg( 0, std::ios::end );
+	result.reserve( ifs.tellg( ) );
+	ifs.seekg( 0, std::ios::beg );
+
+	result.assign( (std::istreambuf_iterator<char>( ifs )), std::istreambuf_iterator<char>( ) );
+
+	return result;
+}
+
 int main( int argc, char** argv ) {
 	assert( argc > 2 );
 	daw::history::pump_model_t pump_model( argv[1] );
-	daw::filesystem::MemoryMappedFile<uint8_t> data( argv[2] );
-	std::vector<uint8_t> v( data.size( ), (uint8_t)0 );
-	std::transform( data.begin( ), data.end( ), v.begin( ), []( auto const & a ) {
-		return static_cast<uint8_t>(a);
-	} );
+	
+	auto data = read_file( argv[2] );
+
+	std::vector<uint8_t> v;
+	for( size_t n = 0; n < data.size( ); n += 2 ) {
+		while( std::isspace( data[n] ) ) {
+			++n;
+		}
+		char tmp[3] = { data[n], data[n + 1], 0 };
+		v.push_back( static_cast<uint8_t>(strtol( tmp, nullptr, 16 )) );
+	}
 	
 	auto range = daw::range::make_range( v.data( ), v.data( ) + v.size( ) );
 
