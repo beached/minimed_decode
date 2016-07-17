@@ -40,7 +40,7 @@ void display( Data const & data ) {
 auto current_year( ) {
 	auto t = std::chrono::system_clock::now( );
 	std::time_t now_c = std::chrono::system_clock::to_time_t( t );
-    struct tm *parts = std::localtime( &now_c );
+	struct tm *parts = std::localtime( &now_c );
 	uint16_t result = 1900 + parts->tm_year;
 	return result;
 }
@@ -95,7 +95,7 @@ int main( int argc, char** argv ) {
 	};
 
 	while( !range.at_end( ) ) {
-		std::cout << std::dec << std::dec << pos << "/" << v.size( ) << ": ";
+		std::cout << std::dec << std::dec << pos << "/" << v.size( )-1 << ": ";
 		auto item = daw::history::create_history_entry( range, pump_model, pos );
 		if( item ) {
 			std::cout << *item;
@@ -113,7 +113,7 @@ int main( int argc, char** argv ) {
 			display( daw::range::make_range( v.data( ) + err_start, v.data( ) + pos - offset ) );
 			std::cout << " }\n";
 			if( !range.at_end( ) ) {
-				std::cout << std::dec << std::dec << (pos-offset) << "/" << v.size( ) << ": " << *item;
+				std::cout << std::dec << std::dec << (pos-offset) << "/" << v.size( )-1 << ": " << *item;
 				entries.push_back( std::move( item ) );
 			}
 		}
