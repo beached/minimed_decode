@@ -105,7 +105,7 @@ int main( int argc, char** argv ) {
 				safe_advance( range, 1 );
 				++pos;
 			}
-			auto offset = item ? item->size( ) : 0;
+			auto offset = item ? item->size( ) - 1 : 0;
 			std::cout << (pos-(err_start+offset)) << " ) { ";
 			display( daw::range::make_range( v.data( ) + err_start, v.data( ) + pos - offset ) );
 			std::cout << " }\n";
