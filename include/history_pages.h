@@ -28,6 +28,8 @@
 
 namespace daw {
 	namespace history {
+		std::string op_string( uint8_t op_code );
+
 		using data_source_t = daw::range::Range<uint8_t *>;
 		struct pump_model_t {
 			uint16_t generation;

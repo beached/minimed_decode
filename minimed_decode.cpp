@@ -61,7 +61,9 @@ int main( int argc, char** argv ) {
 		char tmp[3] = { data[n], data[n + 1], 0 };
 		v.push_back( static_cast<uint8_t>(strtol( tmp, nullptr, 16 )) );
 	}
-	v.pop_back( ); // null terminator
+	if( v.back( ) == 0 ) {
+		v.pop_back( ); // null terminator
+	}
 	v.pop_back( ); // crc
 	v.pop_back( ); // crc
 	auto range = daw::range::make_range( v.data( ), v.data( ) + v.size( ) );
