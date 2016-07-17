@@ -45,6 +45,8 @@ namespace daw {
 			has_low_suspend { generation >= 51 },
 			strokes_per_unit( generation >= 23 ? 40 : 10 ) { }
 
+		pump_model_t::~pump_model_t( ) { }
+
 		history_entry_obj::history_entry_obj( data_source_t data, size_t data_size, pump_model_t, size_t timestamp_offset, size_t timestamp_size ):
 			m_opcode { data[0] },
 			m_data { data.shrink( data_size ) },
@@ -70,19 +72,27 @@ namespace daw {
 		}
 
 		uint8_t history_entry_obj::opcode( ) const {
-			return m_opcode;
+			return this->m_opcode;
 		}
 
 		data_source_t & history_entry_obj::data( ) {
-			return m_data;
+			return this->m_data;
 		}
 
 		data_source_t const & history_entry_obj::data( ) const {
-			return m_data;
+			return this->m_data;
 		}
 
-		size_t const & history_entry_obj::size( ) const {
-			return m_size;
+		size_t history_entry_obj::size( ) const {
+			return this->m_size;
+		}
+
+		size_t history_entry_obj::timestamp_offset( ) const {
+			return this->m_timestamp_offset;
+		}
+
+		size_t history_entry_obj::timestamp_size( ) const {
+			return this->m_timestamp_size;
 		}
 
 		hist_bolus_normal::~hist_bolus_normal( ) { }

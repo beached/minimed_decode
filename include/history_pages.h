@@ -75,22 +75,22 @@ namespace daw {
 			history_entry_obj( data_source_t data, size_t data_size, pump_model_t, size_t timestamp_offset = 2, size_t timestamp_size = 5 );
 		public:
 			virtual ~history_entry_obj( );
+
+			uint8_t opcode( ) const;
+			data_source_t & data( );
+			data_source_t const & data( ) const;
+			size_t size( ) const;
+			size_t timestamp_offset( ) const; 
+			size_t timestamp_size( ) const; 
+
+			boost::optional<timestamp_t> timestamp( ) const;
+			std::tuple<uint8_t, size_t, size_t> register_event_type( ) const;
+
+			history_entry_obj( ) = delete;
 			history_entry_obj( history_entry_obj const & ) = default;
 			history_entry_obj( history_entry_obj && ) = default;
 			history_entry_obj & operator=( history_entry_obj const & ) = default;
 			history_entry_obj & operator=( history_entry_obj && ) = default;
-			size_t timestamp_offset( ) const; 
-			size_t timestamp_size( ) const; 
-
-			std::tuple<uint8_t, size_t, size_t> register_event_type( ) const;
-
-			virtual boost::optional<timestamp_t> timestamp( ) const;
-
-			uint8_t opcode( ) const;
-			
-			data_source_t & data( );
-			data_source_t const & data( ) const;
-			size_t const & size( ) const;
 		};	// history_entry_obj
 
 		template<uint8_t child_opcode>
