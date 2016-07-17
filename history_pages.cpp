@@ -277,7 +277,7 @@ namespace daw {
 		namespace {
 			template<typename... Args>
 			std::unique_ptr<history_entry_obj> create_history_entry_impl( uint8_t opcode, Args&&... arg ) {
-				auto result = std::unique_ptr<history_entry_obj>( [opcode]( Args&&... args ) -> history_entry_obj* {
+				return  std::unique_ptr<history_entry_obj>( [opcode]( Args&&... args ) -> history_entry_obj* {
 					switch( opcode ) {
 							case 0x00: return new hist_skip( std::forward<Args>( args )... );
 							case 0x01: return new hist_bolus_normal( std::forward<Args>( args )... );
@@ -343,10 +343,6 @@ namespace daw {
 							default: return nullptr;
 					}
 				}( std::forward<Args>(arg)... ) );
-				if( result ) {
-					std::cout << *result << "\n";
-				}
-				return result;
 			}
 		}	// namespace anonymous
 

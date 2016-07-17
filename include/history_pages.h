@@ -67,8 +67,6 @@ namespace daw {
 			static timestamp_t parse_date( data_source_t arry );
 		};	// timestamp_t
 
-		std::ostream & operator<<( std::ostream & os, timestamp_t::time_t const & t );
-		std::ostream & operator<<( std::ostream & os, timestamp_t const & ts );
 
 		class history_entry_obj {
 			uint8_t m_opcode; 
@@ -227,6 +225,9 @@ namespace daw {
 
 
 		std::unique_ptr<history_entry_obj> create_history_entry( data_source_t & data, pump_model_t pump_model, size_t & position );
+		std::ostream & operator<<( std::ostream & os, timestamp_t::time_t const & t );
+		std::ostream & operator<<( std::ostream & os, timestamp_t const & ts );
+		std::ostream & operator<<( std::ostream & os, history_entry_obj const & entry );
 	}	// namespace history
 }	// namespace daw
 

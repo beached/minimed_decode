@@ -25,13 +25,21 @@
 #include <streambuf>
 #include <fstream>
 #include <cstdlib>
+#include <chrono>
 
 template<typename Data>
 void display( Data const & data ) {
 	for( auto it = data.begin( ); it != data.end( ); ++it ) {
 		std::cout << std::hex << std::setw( 2 ) << std::setfill( '0' ) << static_cast<int>(*it) << "  ";
 	}
-	std::cout << std::endl;
+}
+
+auto current_year( ) {
+	auto t = std::chrono::system_clock::now( );
+	std::time_t now_c = std::chrono::system_clock::to_time_t( t );
+    struct tm *parts = std::localtime( &now_c );
+	uint16_t result = 1900 + parts->tm_year;
+	return result;
 }
 
 std::string read_file( std::string file_name ) {
@@ -71,15 +79,42 @@ int main( int argc, char** argv ) {
 	std::vector<std::unique_ptr<daw::history::history_entry_obj>> entries;
 	size_t pos = 0;
 
+	auto good_item = []( auto const & i ) {
+		if( !i ) {
+			return false;
+		}
+		if( !i->timestamp( ) ) {
+			return false;
+		}
+		uint16_t const item_year = i->timestamp( )->date.year;
+		static uint16_t const now_year = current_year( );
+		return item_year == now_year;
+	};
+
 	while( !range.at_end( ) ) {
+		std::cout << std::dec << std::dec << pos << "/" << v.size( ) << ": ";
 		auto item = daw::history::create_history_entry( range, pump_model, pos );
 		if( item ) {
+			std::cout << *item;
 			entries.push_back( std::move( item ) );
 		} else {
-			std::cout << "Error found at position " << pos << "/" << v.size( ) << "\n";
-			display( range );
-			return EXIT_FAILURE;
+			std::cout << "ERROR: data( ";
+			auto err_start = pos;
+			safe_advance( range, 1 );
+			while( !range.at_end( ) && (range[0] == 0 || !(item = daw::history::create_history_entry( range, pump_model, pos )) || !good_item( item ) )) {
+				safe_advance( range, 1 );
+				++pos;
+			}
+			auto offset = item ? item->size( ) : 0;
+			std::cout << (pos-(err_start+offset)) << " ) { ";
+			display( daw::range::make_range( v.data( ) + err_start, v.data( ) + pos - offset ) );
+			std::cout << " }\n";
+			if( !range.at_end( ) ) {
+				std::cout << std::dec << std::dec << (pos-offset) << "/" << v.size( ) << ": " << *item;
+				entries.push_back( std::move( item ) );
+			}
 		}
+		std::cout << "\n";
 	}
 	return EXIT_SUCCESS;
 }
