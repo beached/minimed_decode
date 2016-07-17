@@ -29,7 +29,7 @@
 template<typename Data>
 void display( Data const & data ) {
 	for( auto it = data.begin( ); it != data.end( ); ++it ) {
-		std::cout << std::hex << *it << "  ";
+		std::cout << std::hex << std::setw( 2 ) << std::setfill( '0' ) << (int)*it << "  ";
 	}
 	std::cout << std::endl;
 }
@@ -65,13 +65,14 @@ int main( int argc, char** argv ) {
 	auto range = daw::range::make_range( v.data( ), v.data( ) + v.size( ) );
 
 	std::vector<std::unique_ptr<daw::history::history_entry_obj>> entries;
+	size_t pos = 0;
 
 	while( !range.at_end( ) ) {
-		auto item = daw::history::create_history_entry( range, pump_model );
+		auto item = daw::history::create_history_entry( range, pump_model, pos );
 		if( item ) {
 			entries.push_back( std::move( item ) );
 		} else {
-			std::cout << "Error found\n";
+			std::cout << "Error found at position " << pos << "/" << v.size( ) << "\n";
 			display( range );
 			return EXIT_FAILURE;
 		}

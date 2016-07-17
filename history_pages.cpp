@@ -184,6 +184,9 @@ namespace daw {
 					case 0X3C: return new hist_change_paradigm_linkid( std::forward<Args>( args )... );
 					case 0X3F: return new hist_bg_received( std::forward<Args>( args )... );
 					case 0X41: return new hist_exercise_marker( std::forward<Args>( args )... );
+					case 0x42: return new hist_manual_insulin_marker( std::forward<Args>( args )... );
+					case 0x43: return new hist_manual_carb_marker( std::forward<Args>( args )... );
+
 					case 0X50: return new hist_change_sensor_setup( std::forward<Args>( args )... );
 					case 0X56: return new hist_change_sensor_rate_of_change_alert_setup( std::forward<Args>( args )... );
 					case 0X57: return new hist_change_bolus_scroll_step_size( std::forward<Args>( args )... );
@@ -220,12 +223,12 @@ namespace daw {
 			}
 		}	// namespace anonymous
 
-		std::unique_ptr<history_entry_obj> create_history_entry( data_source_t & data, pump_model_t pump_model ) {
+		std::unique_ptr<history_entry_obj> create_history_entry( data_source_t & data, pump_model_t pump_model, size_t & position ) {
 			auto result = create_history_entry_impl( data[0], data, std::move( pump_model ) );
-			if( result && data.size( ) < result->size( ) ) {
+			if( !result || data.size( ) < result->size( ) ) {
 				return nullptr;
 			}
-			using std::next;
+			position += result->size( );
 			data.advance( result->size( ) );
 			return result;
 		}

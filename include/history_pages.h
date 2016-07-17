@@ -187,7 +187,8 @@ namespace daw {
 		using hist_change_paradigm_linkid = history_entry_static<0X3C, 21>;
 		using hist_bg_received = history_entry_static<0X3F, 10>;
 		using hist_exercise_marker = history_entry_static<0X41, 8>;
-
+		using hist_manual_insulin_marker = history_entry_static<0X42, 8>;
+		using hist_manual_carb_marker = history_entry_static<0X43, 7>;
 		using hist_change_sensor_rate_of_change_alert_setup = history_entry_static<0X56, 12>;
 		using hist_change_bolus_scroll_step_size = history_entry_static<0X57>;
 
@@ -234,7 +235,7 @@ namespace daw {
 		using hist_change_capture_event_enable = history_entry_static<0X83>;
 
 
-		std::unique_ptr<history_entry_obj> create_history_entry( data_source_t & data, pump_model_t pump_model );
+		std::unique_ptr<history_entry_obj> create_history_entry( data_source_t & data, pump_model_t pump_model, size_t & position );
 	}	// namespace history
 }	// namespace daw
 
