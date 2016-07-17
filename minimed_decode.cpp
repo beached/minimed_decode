@@ -109,9 +109,9 @@ int main( int argc, char** argv ) {
 				++pos;
 			}
 			auto offset = item ? item->size( ) - 1 : 0;
-			std::cout << (pos-(err_start+offset)) << " ) { \033[1;31m";
+			std::cout << (pos-(err_start+offset)) << " ) { ";
 			display( daw::range::make_range( v.data( ) + err_start, v.data( ) + pos - offset ) );
-			std::cout << "\033[0m }\n";
+			std::cout << " }\n";
 			if( !range.at_end( ) ) {
 				std::cout << std::dec << std::dec << (pos-offset) << "/" << v.size( ) << ": " << *item;
 				entries.push_back( std::move( item ) );

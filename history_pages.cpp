@@ -161,15 +161,9 @@ namespace daw {
 			}
 			ss << " data: {";
 			if( this->size( ) > 1 ) {
-				ss << " \033[1;32m" << to_hex( this->data( )[0] ) << "\033[0m";
+				ss << " " << to_hex( this->data( )[0] );
 				for( size_t n=1; n<this->size( ); ++n ) {
-					if( n >= this->timestamp_offset( ) && n < this->timestamp_size( ) + this->timestamp_offset( ) ) { 
-						ss << "\033[1;33m";
-					}
 					ss << " " << to_hex( this->data( )[n] );
-					if( n >= this->timestamp_offset( ) && n < this->timestamp_size( ) + this->timestamp_offset( ) ) { 
-						ss << "\033[0m";
-					}
 				}
 			}
 			ss << " }>";
@@ -294,7 +288,7 @@ namespace daw {
 							case 0x08: return new hist_change_basal_profile_pattern( std::forward<Args>( args )... );
 							case 0x09: return new hist_change_basal_profile( std::forward<Args>( args )... );
 							case 0x0A: return new hist_cal_bg_for_ph( std::forward<Args>( args )... );
-//							case 0x0B: return new hist_alarm_sensor( std::forward<Args>( args )... ); 
+							case 0x0B: return new hist_alarm_sensor( std::forward<Args>( args )... ); 
 							case 0x0C: return new hist_clear_alarm( std::forward<Args>( args )... );
 							case 0x14: return new hist_select_basal_profile( std::forward<Args>( args )... );
 							case 0x16: return new hist_temp_basal_duration( std::forward<Args>( args )... );
