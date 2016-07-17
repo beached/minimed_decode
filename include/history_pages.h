@@ -65,6 +65,9 @@ namespace daw {
 			static timestamp_t parse_date( data_source_t arry );
 		};	// timestamp_t
 
+		std::ostream & operator<<( std::ostream & os, timestamp_t::time_t const & t );
+		std::ostream & operator<<( std::ostream & os, timestamp_t const & ts );
+
 		class history_entry_obj {
 			uint8_t m_opcode; 
 			data_source_t m_data;
@@ -75,7 +78,7 @@ namespace daw {
 			history_entry_obj( data_source_t data, size_t data_size, pump_model_t, size_t timestamp_offset = 2, size_t timestamp_size = 5 );
 		public:
 			virtual ~history_entry_obj( );
-
+			virtual std::string to_string( ) const;
 			uint8_t opcode( ) const;
 			data_source_t & data( );
 			data_source_t const & data( ) const;
@@ -133,7 +136,7 @@ namespace daw {
 		};	// history_entry_static	
 
 		// Known History Entries in order of opcode
-		using hist_skip = history_entry_static<0x00, 0, 0>;
+		using hist_skip = history_entry_static<0x00, 1, 0, 0>;
 
 		struct hist_bolus_normal: public history_entry<0x01> {
 			size_t m_timestamp_offset;
