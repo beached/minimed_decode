@@ -37,8 +37,11 @@ int main( int argc, char** argv ) {
 	daw::history::pump_model_t pump_model( argv[1] );
 	daw::filesystem::MemoryMappedFile<uint8_t> data( argv[2] );
 	std::vector<uint8_t> v( data.size( ), (uint8_t)0 );
-	std::copy( data.begin( ), data.end( ), v.begin( ) );
-	auto range = daw::range::make_range( v.begin( ), v.end( ) );
+	std::transform( data.begin( ), data.end( ), v.begin( ), []( auto const & a ) {
+		return static_cast<uint8_t>(a);
+	} );
+	
+	auto range = daw::range::make_range( v.data( ), v.data( ) + v.size( ) );
 
 	std::vector<std::unique_ptr<daw::history::history_entry_obj>> entries;
 
