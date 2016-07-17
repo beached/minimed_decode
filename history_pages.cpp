@@ -154,6 +154,7 @@ namespace daw {
 			std::unique_ptr<history_entry_obj> create_history_entry_impl( uint8_t opcode, Args&&... arg ) {
 				return std::unique_ptr<history_entry_obj>( [opcode]( Args&&... args ) -> history_entry_obj* {
 					switch( opcode ) {
+					case 0x00: return new hist_skip( std::forward<Args>( args )... );
 					case 0X01: return new hist_bolus_normal( std::forward<Args>( args )... );
 					case 0X03: return new hist_prime( std::forward<Args>( args )... );
 					case 0X06: return new hist_alarm_pump( std::forward<Args>( args )... );

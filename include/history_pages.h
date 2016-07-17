@@ -133,6 +133,8 @@ namespace daw {
 		};	// history_entry_static	
 
 		// Known History Entries in order of opcode
+		using hist_skip = history_entry_static<0x00, 0, 0>;
+
 		struct hist_bolus_normal: public history_entry<0x01> {
 			size_t m_timestamp_offset;
 			hist_bolus_normal( data_source_t data, pump_model_t pump_model );
