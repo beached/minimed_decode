@@ -222,11 +222,11 @@ namespace daw {
 
 		std::unique_ptr<history_entry_obj> create_history_entry( data_source_t & data, pump_model_t pump_model ) {
 			auto result = create_history_entry_impl( data[0], data, std::move( pump_model ) );
-			if( data.size( ) < result->size( ) ) {
+			if( result && data.size( ) < result->size( ) ) {
 				return nullptr;
 			}
 			using std::next;
-			data.safe_advance( result->size( ) );
+			data.advance( result->size( ) );
 			return result;
 		}
 	}	// namespace history
