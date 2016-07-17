@@ -24,21 +24,21 @@
 #include <daw/daw_memory_mapped_file.h>
 #include <iostream>
 
-display( daw::range::Range<uint8_t> data ) {
-	for( auto i: data ) {
-		std::cout << std::hex << i << "  ";
+template<typename Data>
+void display( Data const & data ) {
+	for( auto it = data.begin( ); it != data.end( ); ++it ) {
+		std::cout << std::hex << *it << "  ";
 	}
-	std::endl;
-
+	std::cout << std::endl;
 }
 
 int main( int argc, char** argv ) {
 	assert( argc > 2 );
 	daw::history::pump_model_t pump_model( argv[1] );
 	daw::filesystem::MemoryMappedFile<uint8_t> data( argv[2] );
-	auto range = daw::range::make_range( data );
+	auto range = daw::range::Range<uint8_t*>( (uint8_t*)data.begin( ), (uint8_t*)data.end( ) ); 
 
-	std::vector<std::unique_ptr<history_entry_obj>> entries;
+	std::vector<std::unique_ptr<daw::history::history_entry_obj>> entries;
 
 	while( !range.at_end( ) ) {
 		auto item = create_history_entry( range, pump_model );

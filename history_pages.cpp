@@ -45,10 +45,12 @@ namespace daw {
 			has_low_suspend { generation >= 51 },
 			strokes_per_unit( generation >= 23 ? 40 : 10 ) { }
 
-		history_entry_obj::history_entry_obj( data_source_t data, size_t data_size, pump_model_t ):
+		history_entry_obj::history_entry_obj( data_source_t data, size_t data_size, pump_model_t, size_t timestamp_offset, size_t timestamp_size ):
 			m_opcode { data[0] },
 			m_data { data.shrink( data_size ) },
-			m_size { data_size } { }
+			m_size { data_size }, 
+			m_timestamp_offset { timestamp_offset },
+			m_timestamp_size { timestamp_size } { }
 
 		history_entry_obj::~history_entry_obj( ) { };
 
@@ -77,10 +79,6 @@ namespace daw {
 
 		data_source_t const & history_entry_obj::data( ) const {
 			return m_data;
-		}
-
-		size_t & history_entry_obj::size( ) {
-			return m_size;
 		}
 
 		size_t const & history_entry_obj::size( ) const {
@@ -121,25 +119,25 @@ namespace daw {
 		}
 
 		hist_bolus_normal::hist_bolus_normal( data_source_t data, pump_model_t pump_model ):
-			history_entry<hist_bolus_normal, 0x01>( this, std::move( data ), pump_model.larger ? 13 : 9, std::move( pump_model ) ),
+			history_entry<0x01>( std::move( data ), pump_model.larger ? 13 : 9, std::move( pump_model ) ),
 			m_timestamp_offset( pump_model.larger ? 8 : 4 ) { }
 
 		hist_result_daily_total::hist_result_daily_total( data_source_t data, pump_model_t pump_model ):
-			history_entry<hist_result_daily_total, 0x07>( this, std::move( data ), pump_model.larger ? 10 : 7, std::move( pump_model ) ),
+			history_entry<0x07>( std::move( data ), pump_model.larger ? 10 : 7, std::move( pump_model ) ),
 			m_timestamp_offset( pump_model.larger ? 8 : 4 ) { }
 
 
 		hist_change_sensor_setup::hist_change_sensor_setup( data_source_t data, pump_model_t pump_model ):
-			history_entry<hist_change_sensor_setup, 0x50>( this, std::move( data ), pump_model.has_low_suspend ? 41 : 37, std::move( pump_model ) ) { }
+			history_entry<0x50>( std::move( data ), pump_model.has_low_suspend ? 41 : 37, std::move( pump_model ) ) { }
 
 		hist_change_bolus_wizard_setup::hist_change_bolus_wizard_setup( data_source_t data, pump_model_t pump_model ):
-			history_entry<hist_change_bolus_wizard_setup, 0x5A>( this, std::move( data ), pump_model.larger ? 144 : 124, std::move( pump_model ) ) { }
+			history_entry<0x5A>( std::move( data ), pump_model.larger ? 144 : 124, std::move( pump_model ) ) { }
 
 		hist_change_bolus_wizard_estimate::hist_change_bolus_wizard_estimate( data_source_t data, pump_model_t pump_model ):
-			history_entry<hist_change_bolus_wizard_estimate, 0x5B> { this, std::move( data ), static_cast<size_t>(pump_model.larger ? 22 : 20), pump_model } { }
+			history_entry<0x5B> { std::move( data ), static_cast<size_t>(pump_model.larger ? 22 : 20), pump_model } { }
 
 		hist_unabsorbed_insulin::hist_unabsorbed_insulin( data_source_t data, pump_model_t pump_model ):
-			history_entry<hist_unabsorbed_insulin, 0x5C>( this, std::move( data ), (data[1] > 2 ? data[1] : 2), std::move( pump_model ) ) { }
+			history_entry<0x5C>( std::move( data ), (data[1] > 2 ? data[1] : 2), std::move( pump_model ) ) { }
 
 		namespace {
 			template<typename ...Args>

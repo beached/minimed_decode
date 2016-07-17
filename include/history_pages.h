@@ -69,16 +69,18 @@ namespace daw {
 			uint8_t m_opcode; 
 			data_source_t m_data;
 			size_t m_size;
+			size_t m_timestamp_offset;
+			size_t m_timestamp_size;
 		protected:
-			history_entry_obj( data_source_t data, size_t data_size, pump_model_t );
+			history_entry_obj( data_source_t data, size_t data_size, pump_model_t, size_t timestamp_offset = 2, size_t timestamp_size = 5 );
 		public:
 			virtual ~history_entry_obj( );
 			history_entry_obj( history_entry_obj const & ) = default;
 			history_entry_obj( history_entry_obj && ) = default;
 			history_entry_obj & operator=( history_entry_obj const & ) = default;
 			history_entry_obj & operator=( history_entry_obj && ) = default;
-			virtual size_t timestamp_offset( ) const = 0;
-			virtual size_t timestamp_size( ) const = 0;
+			size_t timestamp_offset( ) const; 
+			size_t timestamp_size( ) const; 
 
 			std::tuple<uint8_t, size_t, size_t> register_event_type( ) const;
 
@@ -88,20 +90,15 @@ namespace daw {
 			
 			data_source_t & data( );
 			data_source_t const & data( ) const;
-			virtual size_t & size( );
-			virtual size_t const & size( ) const;
+			size_t const & size( ) const;
 		};	// history_entry_obj
 
-		template<typename Derived, uint8_t child_opcode>
+		template<uint8_t child_opcode>
 		class history_entry: public history_entry_obj {
-			Derived * child;
-		protected:
-			history_entry( Derived * derived, data_source_t data, size_t data_size, pump_model_t pump_model ): 
-					history_entry_obj{ std::move( data ), data_size, std::move( pump_model ) }, 
-					child( derived ) {
 
-				assert( nullptr != child );
-			}
+		protected:
+			history_entry( data_source_t data, size_t data_size, pump_model_t pump_model, size_t timestamp_offset = 2, size_t timestamp_size = 5 ): 
+				history_entry_obj{ std::move( data ), data_size, std::move( pump_model ), timestamp_offset, timestamp_size } { }
 
 		public:
 			virtual ~history_entry( ) = default;
@@ -113,12 +110,12 @@ namespace daw {
 		};	// history_entry
 
 		template<uint8_t child_opcode, size_t child_size = 7, size_t child_timestamp_offset = 2, size_t child_timestamp_size = 5>
-		class history_entry_static: public history_entry<history_entry_static<child_opcode, child_size, child_timestamp_offset>, child_opcode> {
+		class history_entry_static: public history_entry<child_opcode> {
 			static size_t const m_timestamp_offset = child_timestamp_offset;
 			static size_t const m_timestamp_size = child_timestamp_size;
 		public:	
 			history_entry_static( data_source_t data, pump_model_t pump_model ):
-				history_entry<history_entry_static<child_opcode, child_size, child_timestamp_offset>, child_opcode>{ *this, std::move( data ), child_size, std::move( pump_model ) } { }
+				history_entry<child_opcode>{ std::move( data ), child_size, std::move( pump_model ) } { }
 
 			virtual ~history_entry_static( ) = default;
 			history_entry_static( history_entry_static const & ) = default;
@@ -126,17 +123,17 @@ namespace daw {
 			history_entry_static & operator=( history_entry_static const & ) = default;
 			history_entry_static & operator=( history_entry_static && ) = default;
 
-			size_t timestamp_offset( ) const override {
+			size_t timestamp_offset( ) const {
 				return m_timestamp_offset;
 			}
 
-			size_t timestamp_size( ) const override {
+			size_t timestamp_size( ) const {
 				return m_timestamp_size;
 			}
 		};	// history_entry_static	
 
 		// Known History Entries in order of opcode
-		struct hist_bolus_normal: public history_entry<hist_bolus_normal, 0x01> {
+		struct hist_bolus_normal: public history_entry<0x01> {
 			size_t m_timestamp_offset;
 			hist_bolus_normal( data_source_t data, pump_model_t pump_model );
 			virtual ~hist_bolus_normal( );
@@ -150,7 +147,7 @@ namespace daw {
 		using hist_prime = history_entry_static<0x03, 10, 5>;
 		using hist_alarm_pump = history_entry_static<0x06, 9, 4>;
 
-		struct hist_result_daily_total: public history_entry<hist_result_daily_total, 0x07> {
+		struct hist_result_daily_total: public history_entry<0x07> {
 			static size_t const m_timestamp_size = 2;
 			size_t m_timestamp_offset;
 
@@ -194,22 +191,22 @@ namespace daw {
 		using hist_change_sensor_rate_of_change_alert_setup = history_entry_static<0X56, 12>;
 		using hist_change_bolus_scroll_step_size = history_entry_static<0X57>;
 
-		struct hist_change_sensor_setup: public history_entry<hist_change_sensor_setup, 0x50> {
+		struct hist_change_sensor_setup: public history_entry<0x50> {
 			hist_change_sensor_setup( data_source_t data, pump_model_t pump_model );
 			virtual ~hist_change_sensor_setup( );
 		};	// hist_change_sensor_setup
 
-		struct hist_change_bolus_wizard_setup: public history_entry<hist_change_bolus_wizard_setup, 0x5A> {
+		struct hist_change_bolus_wizard_setup: public history_entry<0x5A> {
 			hist_change_bolus_wizard_setup( data_source_t data, pump_model_t pump_model );
 			virtual ~hist_change_bolus_wizard_setup( );
 		};	// hist_change_bolus_wizard_setup
 
-		struct hist_change_bolus_wizard_estimate: public history_entry<hist_change_bolus_wizard_estimate, 0x5B> {
+		struct hist_change_bolus_wizard_estimate: public history_entry<0x5B> {
 			hist_change_bolus_wizard_estimate( data_source_t data, pump_model_t pump_model );
 			virtual ~hist_change_bolus_wizard_estimate( );
 		};	// hist_change_bolus_wizard_estimate
 
-		struct hist_unabsorbed_insulin: public history_entry<hist_unabsorbed_insulin, 0x5C> {
+		struct hist_unabsorbed_insulin: public history_entry<0x5C> {
 			hist_unabsorbed_insulin( data_source_t data, pump_model_t pump_model );
 			virtual ~hist_unabsorbed_insulin( );
 		};	// hist_unabsorbed_insulin
