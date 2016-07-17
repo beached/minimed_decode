@@ -150,8 +150,8 @@ namespace daw {
 
 		std::string history_entry_obj::to_string( ) const {
 			std::stringstream ss;
-			ss << op_string( this->opcode( ) );
-			ss << "<op: " << to_hex( this->opcode( ) );
+			ss << op_string( this->op_code( ) );
+			ss << "<op: " << to_hex( this->op_code( ) );
 			ss << " size: " << this->size( );
 			ss << " ts_offset: " << this->timestamp_offset( );
 			ss << " ts_size: " << this->timestamp_size( );
@@ -171,7 +171,7 @@ namespace daw {
 		}
 
 		history_entry_obj::history_entry_obj( data_source_t data, size_t data_size, pump_model_t, size_t timestamp_offset, size_t timestamp_size ):
-			m_opcode { data[0] },
+			m_op_code { data[0] },
 			m_data { data.shrink( data_size ) },
 			m_size { data_size }, 
 			m_timestamp_offset { timestamp_offset },
@@ -179,8 +179,8 @@ namespace daw {
 
 		history_entry_obj::~history_entry_obj( ) { };
 
-		std::tuple<uint8_t, size_t, size_t> history_entry_obj::register_event_type( ) const {
-			return std::make_tuple( this->opcode( ), this->size( ), this->timestamp_offset( ) );
+		std::tuple<uint8_t, size_t, size_t, size_t> history_entry_obj::register_event_type( ) const {
+			return std::make_tuple( this->op_code( ), this->size( ), this->timestamp_offset( ), this->timestamp_size( ) );
 		}
 
 		boost::optional<timestamp_t> history_entry_obj::timestamp( ) const {
@@ -200,8 +200,8 @@ namespace daw {
 			}
 		}
 
-		uint8_t history_entry_obj::opcode( ) const {
-			return this->m_opcode;
+		uint8_t history_entry_obj::op_code( ) const {
+			return this->m_op_code;
 		}
 
 		data_source_t & history_entry_obj::data( ) {
@@ -277,9 +277,9 @@ namespace daw {
 
 		namespace {
 			template<typename... Args>
-			std::unique_ptr<history_entry_obj> create_history_entry_impl( uint8_t opcode, Args&&... arg ) {
-				return  std::unique_ptr<history_entry_obj>( [opcode]( Args&&... args ) -> history_entry_obj* {
-					switch( opcode ) {
+			std::unique_ptr<history_entry_obj> create_history_entry_impl( uint8_t op_code, Args&&... arg ) {
+				return  std::unique_ptr<history_entry_obj>( [op_code]( Args&&... args ) -> history_entry_obj* {
+					switch( op_code ) {
 							case 0x00: return new hist_skip( std::forward<Args>( args )... );
 							case 0x01: return new hist_bolus_normal( std::forward<Args>( args )... );
 							case 0x03: return new hist_prime( std::forward<Args>( args )... );

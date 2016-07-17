@@ -29,10 +29,25 @@
 
 namespace daw {
 	namespace history {
-		// Known History Entries in order of opcode
+		// Known History Entries in order of op_code
 		using hist_skip = history_entry_static<0x00, 1, 0, 0>;
 
+		enum class bolus_type: uint8_t {
+			normal,
+			square,
+			dual_wave
+		};
+
 		struct hist_bolus_normal: public history_entry<0x01> {
+			struct {
+				double amount;
+				uint32_t age;
+			} unabsorbed_insulin;
+			double amount;
+			double programmed;
+			double unabsorbed_insulin_total;
+
+
 			hist_bolus_normal( data_source_t data, pump_model_t pump_model );
 			virtual ~hist_bolus_normal( );
 			hist_bolus_normal( hist_bolus_normal const & ) = default;
