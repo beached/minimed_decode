@@ -20,6 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include <boost/date_time/gregorian/gregorian.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/optional.hpp>
 #include <daw/daw_range.h>
 #include <sstream>
@@ -126,23 +128,6 @@ namespace daw {
 
 		pump_model_t::~pump_model_t( ) { }
 
-		std::ostream & operator<<( std::ostream & os, timestamp_t::time_t const & t ) {
-			os << std::setfill( '0' ) << std::setw( 2 ) << static_cast<int>(t.hour) << ":";
-			os << std::setfill( '0' ) << std::setw( 2 ) << static_cast<int>(t.minute) << ":";
-			os << std::setfill( '0' ) << std::setw( 2 ) << static_cast<int>(t.second);
-			return os;
-		}
-
-		std::ostream & operator<<( std::ostream & os, timestamp_t const & ts ) {
-			os << std::setfill( '0' ) << std::setw( 4 ) << static_cast<int>(ts.date.year) << "/";
-			os << std::setfill( '0' ) << std::setw( 2 ) << static_cast<int>(ts.date.month) << "/";
-			os << std::setfill( '0' ) << std::setw( 2 ) << static_cast<int>(ts.date.day);
-			if( ts.time ) {
-				os << " " << *ts.time;
-			}
-			return os;
-		}
-
 		std::ostream & operator<<( std::ostream & os, history_entry_obj const & entry ) {
 			os << entry.to_string( );
 			return os;
@@ -183,21 +168,17 @@ namespace daw {
 			return std::make_tuple( this->op_code( ), this->size( ), this->timestamp_offset( ), this->timestamp_size( ) );
 		}
 
-		boost::optional<timestamp_t> history_entry_obj::timestamp( ) const {
+		boost::optional<boost::posix_time::ptime> history_entry_obj::timestamp( ) const {
+			boost::optional<boost::posix_time::ptime> result;
 			switch( this->timestamp_size( ) ) {
 			case 2:
-				if( this->data( ).size( ) >= 2 ) {
-					return timestamp_t::parse_date( m_data.slice( this->timestamp_offset( ) ) );
-				} 
-				return boost::optional<timestamp_t>{ };
+					result = parse_date( m_data.slice( this->timestamp_offset( ) ) );
 			case 5:
-				if( this->data( ).size( ) >= 5 ) {
-					return timestamp_t::parse_timestamp( m_data.slice( this->timestamp_offset( ) ) );
-				}
-				return boost::optional<timestamp_t>{ };
+					result = parse_timestamp( m_data.slice( this->timestamp_offset( ) ) );
 			default:
-				return boost::optional<timestamp_t>{ };
+				throw std::runtime_error{ "Unexpected timestamp size" };
 			}
+			return result;
 		}
 
 		uint8_t history_entry_obj::op_code( ) const {
@@ -231,29 +212,34 @@ namespace daw {
 		hist_change_bolus_wizard_estimate::~hist_change_bolus_wizard_estimate( ) { }
 		hist_unabsorbed_insulin::~hist_unabsorbed_insulin( ) { }
 
-		bool timestamp_t::has_time( ) const {
-			return static_cast<bool>(time);
-		}
-
-		timestamp_t timestamp_t::parse_timestamp( data_source_t arry ) {
-			assert( arry.size( ) >= 5 );
-			timestamp_t result;
-			result.time = time_t { };
-			result.time->second = arry[0] & 0b00111111;
-			result.time->minute = arry[1] & 0b00111111;
-			result.time->hour = arry[2] & 0b00011111;
-			result.date.day = arry[3] & 0b00011111;
-			result.date.month = ((arry[0] >> 4) & 0b00001100) + (arry[1] >> 6);
-			result.date.year = 2000 + (arry[4] & 0b01111111);
+		boost::optional<boost::posix_time::ptime> parse_timestamp( data_source_t const arry ) {
+			if( arry.size( ) < 5 ) {
+				return boost::optional<boost::posix_time::ptime>{ };
+			}
+			auto const second = arry[0] & 0b00111111;
+			auto const minute = arry[1] & 0b00111111;
+			auto const hour = arry[2] & 0b00011111;
+			auto const day = arry[3] & 0b00011111;
+			auto const month = ((arry[0] >> 4) & 0b00001100) + (arry[1] >> 6);
+			auto const year = 2000 + (arry[4] & 0b01111111);
+			using namespace boost::posix_time;
+			using namespace boost::gregorian;
+			ptime result{ date{ year, month, day }, time_duration{ hour, minute, second } };
 			return result;
 		}
 
-		timestamp_t timestamp_t::parse_date( data_source_t arry ) {
-			assert( arry.size( ) >= 2 );
-			timestamp_t result;
-			result.date.day = arry[0] & 0b00011111;
-			result.date.month = ((arry[0] & 0b11100000) >> 4) + ((arry[1] & 0b10000000) >> 7);
-			result.date.year = 2000 + (arry[1] & 0b01111111);
+		boost::optional<boost::posix_time::ptime> parse_date( data_source_t const arry ) {
+			if( arry.size( ) < 2 ) {
+				return boost::optional<boost::posix_time::ptime>{ };
+			}
+			auto const second = arry[0] & 0b00111111;
+			auto const minute = arry[1] & 0b00111111;
+			auto const day = arry[0] & 0b00011111;
+			auto const month = ((arry[0] & 0b11100000) >> 4) + ((arry[1] & 0b10000000) >> 7);
+			auto const year = 2000 + (arry[1] & 0b01111111);
+			using namespace boost::posix_time;
+			using namespace boost::gregorian;
+			ptime result{ date{ year, month, day }, time_duration{ 0, 0, 0 } };
 			return result;
 		}
 

@@ -38,10 +38,7 @@ void display( Data const & data ) {
 }
 
 auto current_year( ) {
-	auto t = std::chrono::system_clock::now( );
-	std::time_t now_c = std::chrono::system_clock::to_time_t( t );
-	struct tm *parts = std::localtime( &now_c );
-	uint16_t result = static_cast<uint16_t>(1900 + parts->tm_year);	// Year 63635 issue
+	auto result = boost::posix_time::second_clock::local_time( ).date( ).year( );
 	return result;
 }
 

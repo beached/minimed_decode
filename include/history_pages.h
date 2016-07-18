@@ -32,7 +32,7 @@ namespace daw {
 		// Known History Entries in order of op_code
 		using hist_skip = history_entry_static<0x00, 1, 0, 0>;
 
-		enum class bolus_type: uint8_t {
+		enum class bolus_type_t: uint8_t {
 			normal,
 			square,
 			dual_wave
@@ -46,7 +46,7 @@ namespace daw {
 			double amount;
 			double programmed;
 			double unabsorbed_insulin_total;
-
+			bolus_type_t bolus_type;	 
 
 			hist_bolus_normal( data_source_t data, pump_model_t pump_model );
 			virtual ~hist_bolus_normal( );
