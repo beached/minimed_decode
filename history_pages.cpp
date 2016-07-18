@@ -275,7 +275,7 @@ namespace daw {
 			history_entry<0x01>( std::move( data ), pump_model.larger ? 13 : 9, std::move( pump_model ), pump_model.larger ? 8 : 4 ) { }
 
 		hist_result_daily_total::hist_result_daily_total( data_source_t data, pump_model_t pump_model ):
-			history_entry<0x07>( std::move( data ), pump_model.larger ? 10 : 7, std::move( pump_model ), pump_model.larger ? 8 : 4, 2 ) { }
+			history_entry<0x07>( std::move( data ), pump_model.larger ? 10 : 7, std::move( pump_model ), 5, 2 ) { }
 
 		hist_change_sensor_setup::hist_change_sensor_setup( data_source_t data, pump_model_t pump_model ):
 			history_entry<0x50>( std::move( data ), pump_model.has_low_suspend ? 41 : 37, std::move( pump_model ) ) { }
