@@ -172,11 +172,11 @@ namespace daw {
 			boost::optional<boost::posix_time::ptime> result;
 			switch( this->timestamp_size( ) ) {
 			case 2:
-					result = parse_date( m_data.slice( this->timestamp_offset( ) ) );
+				result = parse_date( m_data.slice( this->timestamp_offset( ) ) );
+				break;
 			case 5:
-					result = parse_timestamp( m_data.slice( this->timestamp_offset( ) ) );
-			default:
-				throw std::runtime_error{ "Unexpected timestamp size" };
+				result = parse_timestamp( m_data.slice( this->timestamp_offset( ) ) );
+				break;
 			}
 			return result;
 		}
@@ -216,12 +216,12 @@ namespace daw {
 			if( arry.size( ) < 5 ) {
 				return boost::optional<boost::posix_time::ptime>{ };
 			}
-			auto const second = arry[0] & 0b00111111;
-			auto const minute = arry[1] & 0b00111111;
-			auto const hour = arry[2] & 0b00011111;
-			auto const day = arry[3] & 0b00011111;
-			auto const month = ((arry[0] >> 4) & 0b00001100) + (arry[1] >> 6);
-			auto const year = 2000 + (arry[4] & 0b01111111);
+			uint16_t const second = arry[0] & 0b00111111;
+			uint16_t const minute = arry[1] & 0b00111111;
+			uint16_t const hour = arry[2] & 0b00011111;
+			uint16_t const day = arry[3] & 0b00011111;
+			uint16_t const month = ((arry[0] >> 4) & 0b00001100) + (arry[1] >> 6);
+			uint16_t const year = 2000 + (arry[4] & 0b01111111);
 			using namespace boost::posix_time;
 			using namespace boost::gregorian;
 			ptime result{ date{ year, month, day }, time_duration{ hour, minute, second } };
@@ -232,11 +232,9 @@ namespace daw {
 			if( arry.size( ) < 2 ) {
 				return boost::optional<boost::posix_time::ptime>{ };
 			}
-			auto const second = arry[0] & 0b00111111;
-			auto const minute = arry[1] & 0b00111111;
-			auto const day = arry[0] & 0b00011111;
-			auto const month = ((arry[0] & 0b11100000) >> 4) + ((arry[1] & 0b10000000) >> 7);
-			auto const year = 2000 + (arry[1] & 0b01111111);
+			uint16_t const day = arry[0] & 0b00011111;
+			uint16_t const month = ((arry[0] & 0b11100000) >> 4) + ((arry[1] & 0b10000000) >> 7); 
+			uint16_t const year = 2000 + (arry[1] & 0b01111111); 
 			using namespace boost::posix_time;
 			using namespace boost::gregorian;
 			ptime result{ date{ year, month, day }, time_duration{ 0, 0, 0 } };
