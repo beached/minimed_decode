@@ -32,6 +32,30 @@ externalproject_add(
 	TEST_COMMAND ""
  )
 
+externalproject_add( 
+	parse_json_prj
+	GIT_REPOSITORY "https://github.com/beached/parse_json.git"
+	GIT_TAG "master"
+	SOURCE_DIR "${CMAKE_BINARY_DIR}/deps/parse_json"
+	INSTALL_DIR "${CMAKE_BINARY_DIR}/install"
+	CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/install
+	PATCH_COMMAND ""
+	TEST_COMMAND ""
+ )
+
+externalproject_add( 
+	char_rannge_prj
+	GIT_REPOSITORY "https://github.com/beached/char_range.git"
+	GIT_TAG "master"
+	SOURCE_DIR "${CMAKE_BINARY_DIR}/deps/char_range"
+	INSTALL_DIR "${CMAKE_BINARY_DIR}/install"
+	CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/install
+	PATCH_COMMAND ""
+	TEST_COMMAND ""
+ )
+
+
+
 include_directories( SYSTEM "${CMAKE_BINARY_DIR}/install/include" )
 link_directories( "${CMAKE_BINARY_DIR}/install/lib" )
 
@@ -52,6 +76,6 @@ set( SOURCE_FILES
 )
 
 add_executable( minimed_decode ${HEADER_FILES} ${SOURCE_FILES} )
-add_dependencies( minimed_decode header_libraries_prj  )
-target_link_libraries( minimed_decode ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} )
+add_dependencies( minimed_decode header_libraries_prj parse_json_prj char_rannge_prj )
+target_link_libraries( minimed_decode char_range parse_json ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} )
 

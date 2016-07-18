@@ -88,10 +88,28 @@ int main( int argc, char** argv ) {
 		return i->timestamp( )->date( ).year( ) == current_year( );
 	};
 
+	auto reasonible_year = []( auto const & i ) {
+		if( i->timestamp( ) ) {
+			auto item_year = i->timestamp( )->date( ).year( );
+			auto this_year = current_year( );
+			if( item_year < this_year - 2 ) {
+				return false;
+			}
+			if( item_year > this_year + 2 ) {
+				return false;
+			}
+		}
+		return true;	// Not all items have timestamps
+	};
+
 	while( !range.at_end( ) ) {
 		std::cout << std::dec << std::dec << pos+1 << "/" << v.size( ) << ": ";
 		auto item = daw::history::create_history_entry( range, pump_model, pos );
+
 		if( item ) {
+			if( !reasonible_year( item ) ) {
+				std::cerr << "WARNING: The year does not look correct, outside of plus or minute 2 years from current system year\n";
+			}
 			std::cout << *item;
 			entries.push_back( std::move( item ) );
 		} else {

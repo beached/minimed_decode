@@ -28,6 +28,8 @@
 #include <daw/daw_range.h>
 #include <cstdint>
 #include <vector>
+#include <daw/json/daw_json.h>
+#include <daw/json/daw_json_link.h>
 
 namespace daw {
 	namespace history {
@@ -50,15 +52,14 @@ namespace daw {
 			pump_model_t & operator=( pump_model_t && ) = default;
 		};	// pump_model_t
 
-		boost::optional<boost::posix_time::ptime> parse_date( data_source_t const & arry ) noexcept;
-		boost::optional<boost::posix_time::ptime> parse_timestamp( data_source_t const & arry ) noexcept;
-
-		class history_entry_obj {
+		class history_entry_obj: public daw::json::JsonLink<history_entry_obj> {
 			uint8_t m_op_code; 
-			data_source_t m_data;
 			size_t m_size;
 			size_t m_timestamp_offset;
 			size_t m_timestamp_size;
+			data_source_t m_data;
+			boost::optional<boost::posix_time::ptime> m_timestamp;
+	
 		protected:
 			history_entry_obj( data_source_t data, size_t data_size, pump_model_t, size_t timestamp_offset = 2, size_t timestamp_size = 5 );
 		public:
