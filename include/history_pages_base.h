@@ -50,8 +50,8 @@ namespace daw {
 			pump_model_t & operator=( pump_model_t && ) = default;
 		};	// pump_model_t
 
-		boost::optional<boost::posix_time::ptime> parse_date( data_source_t const & arry );
-		boost::optional<boost::posix_time::ptime> parse_timestamp( data_source_t const & arry );
+		boost::optional<boost::posix_time::ptime> parse_date( data_source_t const & arry ) noexcept;
+		boost::optional<boost::posix_time::ptime> parse_timestamp( data_source_t const & arry ) noexcept;
 
 		class history_entry_obj {
 			uint8_t m_op_code; 

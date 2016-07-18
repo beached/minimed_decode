@@ -212,7 +212,7 @@ namespace daw {
 		hist_change_bolus_wizard_estimate::~hist_change_bolus_wizard_estimate( ) { }
 		hist_unabsorbed_insulin::~hist_unabsorbed_insulin( ) { }
 
-		boost::optional<boost::posix_time::ptime> parse_timestamp( data_source_t const & arry ) {
+		boost::optional<boost::posix_time::ptime> parse_timestamp( data_source_t const & arry ) noexcept {
 			if( arry.size( ) < 5 ) {
 				return boost::optional<boost::posix_time::ptime>{ };
 			}
@@ -222,22 +222,26 @@ namespace daw {
 			uint8_t  day = arry[3] & 0b00011111;
 			uint8_t  month = ((arry[0] >> 4) & 0b00001100) + (arry[1] >> 6);
 			uint16_t  year = 2000 + (arry[4] & 0b01111111);
-			if( day == 0 ) {
-				std::cerr << "WARNING: Bad date parse, day was 0\n";
+			if( day < 1 || day > 31 ) {
+				std::cerr << "WARNING: Bad timestamp parse, day was " << static_cast<int>(day) << "\n";
 				day = 1;
 			}
-			if( month == 0 ) {
-				std::cerr << "WARNING: Bad date parse, month was 0\n";
+			if( month < 1 || month > 12 ) {
+				std::cerr << "WARNING: Bad timestamp parse, month was " << static_cast<int>(month) << "\n";
 				month = 1;
 			}
-
-			using namespace boost::posix_time;
-			using namespace boost::gregorian;
-			ptime result{ date{ year, month, day }, time_duration{ hour, minute, second } };
-			return result;
+			try {
+				using namespace boost::posix_time;
+				using namespace boost::gregorian;
+				ptime result { date { year, month, day }, time_duration { hour, minute, second } };
+				return result;
+			} catch( ... ) {
+				std::cerr << "Could not parse timestamp year=" << year << " month=" << month << " day=" << day << " hour=" << hour << " minute=" << minute << " second=" << second << "\n";
+				return boost::optional<boost::posix_time::ptime>{ };
+			}
 		}
 
-		boost::optional<boost::posix_time::ptime> parse_date( data_source_t const & arry ) {
+		boost::optional<boost::posix_time::ptime> parse_date( data_source_t const & arry ) noexcept {
 			if( arry.size( ) < 2 ) {
 				return boost::optional<boost::posix_time::ptime>{ };
 			}
@@ -248,16 +252,23 @@ namespace daw {
 			uint16_t year = 2000 + (c2 & 0b01111111); 
 			using namespace boost::posix_time;
 			using namespace boost::gregorian;
-			if( day == 0 ) {
-				std::cerr << "WARNING: Bad date parse, day was 0\n";
+			if( day < 1 || day > 31 ) {
+				std::cerr << "WARNING: Bad date parse, day was " << static_cast<int>(day) << "\n";
 				day = 1;
 			}
-			if( month == 0 ) {
-				std::cerr << "WARNING: Bad date parse, month was 0\n";
+			if( month < 1 || month > 12 ) {
+				std::cerr << "WARNING: Bad date parse, month was " << static_cast<int>(month) << "\n";
 				month = 1;
 			}
-			ptime result{ date{ year, month, day }, time_duration{ 0, 0, 0 } };
-			return result;
+			try {
+				using namespace boost::posix_time;
+				using namespace boost::gregorian;
+				ptime result { date { year, month, day }, time_duration { 0, 0, 0 } };
+				return result;
+			} catch( ... ) {
+				std::cerr << "Could not parse timestamp year=" << year << " month=" << month << " day=" << day << "\n";
+				return boost::optional<boost::posix_time::ptime>{ };
+			}
 		}
 
 		hist_bolus_normal::hist_bolus_normal( data_source_t data, pump_model_t pump_model ):
