@@ -106,7 +106,8 @@ namespace daw {
 		}
 
 		namespace {
-			boost::optional<boost::posix_time::ptime> parse_timestamp( data_source_t const & arry ) noexcept {
+			template<typename Container>
+			boost::optional<boost::posix_time::ptime> parse_timestamp( Container const & arry ) noexcept {
 				if( arry.size( ) < 5 ) {
 					return boost::optional<boost::posix_time::ptime>{ };
 				}
@@ -135,7 +136,8 @@ namespace daw {
 				}
 			}
 
-			boost::optional<boost::posix_time::ptime> parse_date( data_source_t const & arry ) noexcept {
+			template<typename Container>
+			boost::optional<boost::posix_time::ptime> parse_date( Container const & arry ) noexcept {
 				if( arry.size( ) < 2 ) {
 					return boost::optional<boost::posix_time::ptime>{ };
 				}
@@ -178,8 +180,9 @@ namespace daw {
 				boost::posix_time::ptime result = epoch + boost::posix_time::milliseconds( ms_since_jan_1_1970 );
 				return result;
 			}
-
-			boost::optional<int64_t> parse_timestamp_in_array( data_source_t const & data, size_t ts_offset, size_t ts_size ) noexcept {
+			
+			template<typename Container>
+			boost::optional<int64_t> parse_timestamp_in_array( Container const & data, size_t ts_offset, size_t ts_size ) noexcept {
 				boost::optional<boost::posix_time::ptime> result{ };	
 				switch( ts_size ) {
 				case 2:
@@ -225,8 +228,8 @@ namespace daw {
 			m_size { data_size }, 
 			m_timestamp_offset { timestamp_offset },
 			m_timestamp_size { timestamp_size },
-			m_data { data.shrink( data_size ) },
-			m_timestamp{ parse_timestamp_in_array( m_data, m_timestamp_offset, m_timestamp_size ) } {
+			m_data { data.shrink( data_size ).as_vector( ) },
+			m_timestamp{ parse_timestamp_in_array( data, m_timestamp_offset, m_timestamp_size ) } {
 				
 				link_integral( "op_code", m_op_code );
 				link_integral( "size", m_size );
@@ -254,11 +257,7 @@ namespace daw {
 			return this->m_op_code;
 		}
 
-		data_source_t & history_entry_obj::data( ) {
-			return this->m_data;
-		}
-
-		data_source_t const & history_entry_obj::data( ) const {
+		std::vector<uint8_t> const & history_entry_obj::data( ) const {
 			return this->m_data;
 		}
 

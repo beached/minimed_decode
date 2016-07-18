@@ -57,7 +57,7 @@ namespace daw {
 			size_t m_size;
 			size_t m_timestamp_offset;
 			size_t m_timestamp_size;
-			data_source_t m_data;
+			std::vector<uint8_t> m_data;
 			boost::optional<int64_t> m_timestamp;
 	
 		protected:
@@ -65,8 +65,7 @@ namespace daw {
 		public:
 			virtual ~history_entry_obj( );
 			uint8_t op_code( ) const;
-			data_source_t & data( );
-			data_source_t const & data( ) const;
+			std::vector<uint8_t> const & data( ) const;
 			size_t size( ) const;
 			size_t timestamp_offset( ) const; 
 			size_t timestamp_size( ) const; 
