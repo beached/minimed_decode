@@ -38,8 +38,7 @@ void display( Data const & data ) {
 }
 
 auto current_year( ) {
-	auto result = boost::posix_time::second_clock::local_time( ).date( ).year( );
-	return result;
+	return boost::posix_time::second_clock::local_time( ).date( ).year( );
 }
 
 std::string read_file( std::string file_name ) {
@@ -86,9 +85,7 @@ int main( int argc, char** argv ) {
 		if( !i->timestamp( ) ) {
 			return false;
 		}
-		uint16_t const item_year = i->timestamp( )->date.year;
-		static uint16_t const now_year = current_year( );
-		return item_year == now_year;
+		return i->timestamp( ).date( ).year( ) == current_year( );
 	};
 
 	while( !range.at_end( ) ) {
