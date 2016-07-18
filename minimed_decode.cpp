@@ -110,7 +110,7 @@ int main( int argc, char** argv ) {
 			if( !reasonible_year( item ) ) {
 				std::cerr << "WARNING: The year does not look correct, outside of plus or minute 2 years from current system year\n";
 			}
-			std::cout << *item;
+			std::cout << item->encode( );
 			entries.push_back( std::move( item ) );
 		} else {
 			std::cout << "ERROR: data( ";
@@ -125,7 +125,7 @@ int main( int argc, char** argv ) {
 			display( daw::range::make_range( v.data( ) + err_start, v.data( ) + pos - offset ) );
 			std::cout << " }\n";
 			if( !range.at_end( ) ) {
-				std::cout << std::dec << std::dec << (pos-offset)+1 << "/" << v.size( ) << ": " << *item;
+				std::cout << std::dec << std::dec << (pos-offset)+1 << "/" << v.size( ) << ": " << item->encode( );
 				entries.push_back( std::move( item ) );
 			}
 		}

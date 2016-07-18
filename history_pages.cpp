@@ -26,10 +26,18 @@
 #include <daw/daw_range.h>
 #include <sstream>
 #include <tuple>
+#include <daw/json/daw_json.h>
+#include <daw/json/daw_json_link.h>
 #include "history_pages.h"
 
 namespace daw {
 	namespace history {
+		std::string to_hex( uint8_t val ) {
+			std::stringstream ss;
+			ss << std::hex << std::setfill( '0' ) << std::setw( 2 ) << static_cast<int>(val);
+			return ss.str( );
+		}
+		
 		std::string op_string( uint8_t op_code ) {
 			switch( op_code ) {
 				case 0x00: return "skip";
@@ -98,7 +106,6 @@ namespace daw {
 		}
 
 		namespace {
-
 			boost::optional<boost::posix_time::ptime> parse_timestamp( data_source_t const & arry ) noexcept {
 				if( arry.size( ) < 5 ) {
 					return boost::optional<boost::posix_time::ptime>{ };
@@ -147,7 +154,7 @@ namespace daw {
 				try {
 					using namespace boost::posix_time;
 					using namespace boost::gregorian;
-					ptime result { date { year, month, day }, time_duration { 0, 0, 0 } };
+					ptime result { date { year, month, day } };
 					return result;
 				} catch( ... ) {
 					std::cerr << "WARNING: Could not parse date year=" << static_cast<int>(year) << " month=" << static_cast<int>(month)
@@ -156,14 +163,36 @@ namespace daw {
 				}
 			}
 
-			boost::optional<boost::posix_time::ptime> parse_timestamp_in_array( data_source_t const & data, size_t ts_offset, size_t ts_size ) noexcept {
+			int64_t milliseconds_since_epoch( boost::posix_time::ptime const & t ) {
+				using namespace boost::posix_time;
+				using namespace boost::gregorian;
+				static ptime const epoch{ date{ 1970, 1, 1 } };
+				boost::posix_time::time_duration duration = t - epoch;
+				return duration.total_milliseconds( );
+			}
+
+			boost::posix_time::ptime ptime_from_int( int64_t ms_since_jan_1_1970 ) {
+				using namespace boost::posix_time;
+				using namespace boost::gregorian;
+				static ptime const epoch{ date{ 1970, 1, 1 } };
+				boost::posix_time::ptime result = epoch + boost::posix_time::milliseconds( ms_since_jan_1_1970 );
+				return result;
+			}
+
+			boost::optional<int64_t> parse_timestamp_in_array( data_source_t const & data, size_t ts_offset, size_t ts_size ) noexcept {
+				boost::optional<boost::posix_time::ptime> result{ };	
 				switch( ts_size ) {
 				case 2:
-					return parse_date( data.slice( ts_offset ) );
+					result = parse_date( data.slice( ts_offset ) );
+					break;
 				case 5:
-					return parse_timestamp( data.slice( ts_offset ) );
+					result = parse_timestamp( data.slice( ts_offset ) );
+					break;
 				}
-				return boost::optional<boost::posix_time::ptime>{ }; 
+				if( result ) {
+					return boost::optional<int64_t>{ milliseconds_since_epoch( *result ) };
+				}	
+				return boost::optional<int64_t>{ };
 			}
 
 			template<typename To, typename From>
@@ -173,12 +202,6 @@ namespace daw {
 				To result;
 				ss >> result;
 				return result;
-			}
-
-			std::string to_hex( uint8_t val ) {
-				std::stringstream ss;
-				ss << std::hex << std::setfill( '0' ) << std::setw( 2 ) << static_cast<int>(val);
-				return ss.str( );
 			}
 
 			template<typename T, typename U, typename R=T>
@@ -197,6 +220,7 @@ namespace daw {
 		pump_model_t::~pump_model_t( ) { }
 
 		history_entry_obj::history_entry_obj( data_source_t data, size_t data_size, pump_model_t, size_t timestamp_offset, size_t timestamp_size ):
+			JsonLink<history_entry_obj>( op_string( data[0] ) ),
 			m_op_code { data[0] },
 			m_size { data_size }, 
 			m_timestamp_offset { timestamp_offset },
@@ -209,7 +233,8 @@ namespace daw {
 				link_integral( "timestamp_offset", m_timestamp_offset );
 				link_integral( "timestamp_size", m_timestamp_size );
 				link_array( "data", m_data );
-				link_streamable( "timestamp", m_timestamp );
+				link_integral( "timestamp", m_timestamp );
+
 			}
 
 		history_entry_obj::~history_entry_obj( ) { };
@@ -219,7 +244,10 @@ namespace daw {
 		}
 
 		boost::optional<boost::posix_time::ptime> history_entry_obj::timestamp( ) const {
-			return m_timestamp;
+			if( !m_timestamp ) {
+				return  boost::optional<boost::posix_time::ptime>{ };
+			}
+			return ptime_from_int( *m_timestamp );	
 		}
 
 		uint8_t history_entry_obj::op_code( ) const {
