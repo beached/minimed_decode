@@ -212,31 +212,50 @@ namespace daw {
 		hist_change_bolus_wizard_estimate::~hist_change_bolus_wizard_estimate( ) { }
 		hist_unabsorbed_insulin::~hist_unabsorbed_insulin( ) { }
 
-		boost::optional<boost::posix_time::ptime> parse_timestamp( data_source_t const arry ) {
+		boost::optional<boost::posix_time::ptime> parse_timestamp( data_source_t const & arry ) {
 			if( arry.size( ) < 5 ) {
 				return boost::optional<boost::posix_time::ptime>{ };
 			}
-			uint16_t const second = arry[0] & 0b00111111;
-			uint16_t const minute = arry[1] & 0b00111111;
-			uint16_t const hour = arry[2] & 0b00011111;
-			uint16_t const day = arry[3] & 0b00011111;
-			uint16_t const month = ((arry[0] >> 4) & 0b00001100) + (arry[1] >> 6);
-			uint16_t const year = 2000 + (arry[4] & 0b01111111);
+			uint8_t  second = arry[0] & 0b00111111;
+			uint8_t  minute = arry[1] & 0b00111111;
+			uint8_t  hour = arry[2] & 0b00011111;
+			uint8_t  day = arry[3] & 0b00011111;
+			uint8_t  month = ((arry[0] >> 4) & 0b00001100) + (arry[1] >> 6);
+			uint16_t  year = 2000 + (arry[4] & 0b01111111);
+			if( day == 0 ) {
+				std::cerr << "WARNING: Bad date parse, day was 0\n";
+				day = 1;
+			}
+			if( month == 0 ) {
+				std::cerr << "WARNING: Bad date parse, month was 0\n";
+				month = 1;
+			}
+
 			using namespace boost::posix_time;
 			using namespace boost::gregorian;
 			ptime result{ date{ year, month, day }, time_duration{ hour, minute, second } };
 			return result;
 		}
 
-		boost::optional<boost::posix_time::ptime> parse_date( data_source_t const arry ) {
+		boost::optional<boost::posix_time::ptime> parse_date( data_source_t const & arry ) {
 			if( arry.size( ) < 2 ) {
 				return boost::optional<boost::posix_time::ptime>{ };
 			}
-			uint16_t const day = arry[0] & 0b00011111;
-			uint16_t const month = ((arry[0] & 0b11100000) >> 4) + ((arry[1] & 0b10000000) >> 7); 
-			uint16_t const year = 2000 + (arry[1] & 0b01111111); 
+			auto c1 = arry[0];
+			auto c2 = arry[1];
+			uint8_t day = c1 & 0b00011111;
+			uint8_t month = ((c1 & 0b11100000) >> 4) + ((c2 & 0b10000000) >> 7); 
+			uint16_t year = 2000 + (c2 & 0b01111111); 
 			using namespace boost::posix_time;
 			using namespace boost::gregorian;
+			if( day == 0 ) {
+				std::cerr << "WARNING: Bad date parse, day was 0\n";
+				day = 1;
+			}
+			if( month == 0 ) {
+				std::cerr << "WARNING: Bad date parse, month was 0\n";
+				month = 1;
+			}
 			ptime result{ date{ year, month, day }, time_duration{ 0, 0, 0 } };
 			return result;
 		}
