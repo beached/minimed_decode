@@ -43,8 +43,8 @@ namespace daw {
 				double amount;
 				uint32_t age;
 			} unabsorbed_insulin;
-			double amount;
-			double programmed;
+			double m_amount;
+			double m_programmed;
 			double unabsorbed_insulin_total;
 			bolus_type_t bolus_type;	 
 

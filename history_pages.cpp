@@ -281,7 +281,10 @@ namespace daw {
 		hist_unabsorbed_insulin::~hist_unabsorbed_insulin( ) { }
 
 		hist_bolus_normal::hist_bolus_normal( data_source_t data, pump_model_t pump_model ):
-			history_entry<0x01>( std::move( data ), pump_model.larger ? 13 : 9, std::move( pump_model ), pump_model.larger ? 8 : 4 ) { }
+			history_entry<0x01>( std::move( data ), pump_model.larger ? 13 : 9, std::move( pump_model ), pump_model.larger ? 8 : 4 ) {
+				link_real( "amount", m_amount );
+				link_real( "programmed", m_programmed );
+			}
 
 		hist_result_daily_total::hist_result_daily_total( data_source_t data, pump_model_t pump_model ):
 			history_entry<0x07>( std::move( data ), pump_model.larger ? 10 : 7, std::move( pump_model ), 5, 2 ) { }
