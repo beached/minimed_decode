@@ -85,7 +85,7 @@ int main( int argc, char** argv ) {
 		if( !i->timestamp( ) ) {
 			return false;
 		}
-		return i->timestamp( ).date( ).year( ) == current_year( );
+		return i->timestamp( )->date( ).year( ) == current_year( );
 	};
 
 	while( !range.at_end( ) ) {
