@@ -26,10 +26,12 @@
 #include <daw/daw_range.h>
 #include <cstdint>
 #include "history_pages_base.h"
+#include <boost/endian/conversion.hpp>
 
 namespace daw {
 	namespace history {
 		// Known History Entries in order of op_code
+
 		using hist_skip = history_entry_static<0x00, 1, 0, 0>;
 
 		enum class bolus_type_t: uint8_t {
@@ -39,13 +41,10 @@ namespace daw {
 		};
 
 		struct hist_bolus_normal: public history_entry<0x01> {
-			struct {
-				double amount;
-				uint32_t age;
-			} unabsorbed_insulin;
 			double m_amount;
 			double m_programmed;
-			double unabsorbed_insulin_total;
+			double m_unabsorbed_insulin_total;
+			uint16_t m_duration;
 			bolus_type_t bolus_type;	 
 
 			hist_bolus_normal( data_source_t data, pump_model_t pump_model );
@@ -118,8 +117,23 @@ namespace daw {
 		};	// hist_change_bolus_wizard_estimate
 
 		struct hist_unabsorbed_insulin: public history_entry<0x5C> {
+			struct unabsorbed_insulin_record_t: public daw::json::JsonLink<unabsorbed_insulin_record_t>  {
+				double m_amount;
+				uint32_t m_age;
+				virtual ~unabsorbed_insulin_record_t( );
+				unabsorbed_insulin_record_t( double amount = 0.0, uint32_t age = 0 );
+				unabsorbed_insulin_record_t( unabsorbed_insulin_record_t const & ) = default;
+				unabsorbed_insulin_record_t( unabsorbed_insulin_record_t && ) = default;
+				unabsorbed_insulin_record_t & operator=( unabsorbed_insulin_record_t const & ) = default;
+				unabsorbed_insulin_record_t & operator=( unabsorbed_insulin_record_t && ) = default;
+			};
+			std::vector<unabsorbed_insulin_record_t> m_records;
 			hist_unabsorbed_insulin( data_source_t data, pump_model_t pump_model );
 			virtual ~hist_unabsorbed_insulin( );
+			hist_unabsorbed_insulin( hist_unabsorbed_insulin const & ) = default;
+			hist_unabsorbed_insulin( hist_unabsorbed_insulin && ) = default;
+			hist_unabsorbed_insulin & operator=( hist_unabsorbed_insulin const & ) = default;
+			hist_unabsorbed_insulin & operator=( hist_unabsorbed_insulin && ) = default;
 		};	// hist_unabsorbed_insulin
 
 		using hist_change_variable_bolus = history_entry_static<0x5E>;

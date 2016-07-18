@@ -279,12 +279,37 @@ namespace daw {
 		hist_change_bolus_wizard_setup::~hist_change_bolus_wizard_setup( ) { }
 		hist_change_bolus_wizard_estimate::~hist_change_bolus_wizard_estimate( ) { }
 		hist_unabsorbed_insulin::~hist_unabsorbed_insulin( ) { }
+		
+		namespace {
+			template<typename T, typename Container>
+			T bigendian_to_native_from_bytes( Container const & c, size_t sz = sizeof( T ) ) {
+				assert( sz <= sizeof( T ) );
+				assert( c.size( ) >= sz );
+				T result = 0;
+				unsigned char * p = reinterpret_cast<unsigned char *>(&result);
+				std::copy( c.begin( ), c.begin( ) + sz, p );
+				boost::endian::big_to_native_inplace( result );
+				return result;
+			}
+
+			template<typename Container>
+			double decode_insulin_from_bytes( Container const & c, pump_model_t const & pm ) {
+				return static_cast<double>(bigendian_to_native_from_bytes<uint16_t>( c, pm.larger ? 2 : 1 ))/static_cast<double>(pm.strokes_per_unit);
+			}
+		}
 
 		hist_bolus_normal::hist_bolus_normal( data_source_t data, pump_model_t pump_model ):
-			history_entry<0x01>( std::move( data ), pump_model.larger ? 13 : 9, std::move( pump_model ), pump_model.larger ? 8 : 4 ) {
-				link_real( "amount", m_amount );
-				link_real( "programmed", m_programmed );
-			}
+				history_entry<0x01>( std::move( data ), pump_model.larger ? 13 : 9, std::move( pump_model ), pump_model.larger ? 8 : 4 ),
+				m_amount{ decode_insulin_from_bytes( data.slice( 3 ), pump_model ) }, 
+				m_programmed{ decode_insulin_from_bytes( data.slice( 1 ), pump_model ) },
+				m_unabsorbed_insulin_total{ pump_model.larger ? decode_insulin_from_bytes( data.slice( 5 ), pump_model ) : 0 },
+				m_duration( static_cast<uint16_t>(data[pump_model.larger ? 7 : 3])*30 ) {
+
+			link_real( "amount", m_amount );
+			link_real( "programmed", m_programmed );
+			link_real( "unabsorbed_insulin_total", m_unabsorbed_insulin_total );
+			link_integral( "duration", m_duration );
+		}
 
 		hist_result_daily_total::hist_result_daily_total( data_source_t data, pump_model_t pump_model ):
 			history_entry<0x07>( std::move( data ), pump_model.larger ? 10 : 7, std::move( pump_model ), 5, 2 ) { }
@@ -298,8 +323,32 @@ namespace daw {
 		hist_change_bolus_wizard_estimate::hist_change_bolus_wizard_estimate( data_source_t data, pump_model_t pump_model ):
 			history_entry<0x5B> { std::move( data ), static_cast<size_t>(pump_model.larger ? 22 : 20), pump_model } { }
 
+		hist_unabsorbed_insulin::unabsorbed_insulin_record_t::~unabsorbed_insulin_record_t( ) { }
+
+		hist_unabsorbed_insulin::unabsorbed_insulin_record_t::unabsorbed_insulin_record_t( double amount, uint32_t age ):
+			daw::json::JsonLink<hist_unabsorbed_insulin::unabsorbed_insulin_record_t>( "unabsorbed_insulin_record" ),				
+			m_amount{ amount },
+			m_age{ age } {
+
+			link_real( "amount", m_amount );
+			link_integral( "age", m_age );
+		}	
+
 		hist_unabsorbed_insulin::hist_unabsorbed_insulin( data_source_t data, pump_model_t pump_model ):
-			history_entry<0x5C>( std::move( data ), max( data[1], 2 ), std::move( pump_model ), 1, 0 ) { }
+			history_entry<0x5C>( std::move( data ), max( data[1], 2 ), std::move( pump_model ), 1, 0 ),
+			m_records{ } {
+				
+				{
+					uint8_t num_records = data[1]; 
+					if( num_records >= 5 ) {
+						num_records = (num_records - 2)/2;
+						for( uint8_t n = 0; n<num_records; ++n ) {
+							m_records.emplace_back( static_cast<double>(data[2+(n*3)])/40.0, data[3+(n*3)] + ((data[4+(n*3)] & 0b110000) << 4) );
+						}
+					}
+				}
+				link_array( "records", m_records );	
+		}
 
 		namespace {
 			template<typename... Args>
