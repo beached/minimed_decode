@@ -48,7 +48,7 @@ namespace daw {
 				static auto const result = []( ) { 
 					time_t t = time( nullptr );
 					struct tm lt = {0};
-					daw::localtime_s( &lt, &t );
+					localtime_r( &t, &lt );
 					
 					return lt.tm_gmtoff;
 				}( );
