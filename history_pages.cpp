@@ -22,6 +22,7 @@
 
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/c_local_time_adjustor.hpp>
 #include <boost/optional.hpp>
 #include <daw/daw_range.h>
 #include <sstream>
@@ -32,29 +33,41 @@
 
 namespace daw {
 	namespace history {
-		std::string to_hex( uint8_t val ) {
-			std::stringstream ss;
-			ss << std::hex << std::setfill( '0' ) << std::setw( 2 ) << static_cast<int>(val);
-			return ss.str( );
-		}
-		
+			namespace {
+			std::string to_hex( uint8_t val ) {
+				std::stringstream ss;
+				ss << std::hex << std::setfill( '0' ) << std::setw( 2 ) << static_cast<int>(val);
+				return ss.str( );
+			}
+			
+			auto seconds_from_gmt( ) {
+				static auto const result = []( ) { 
+					time_t t = time( nullptr );
+					struct tm lt = {0};
+					localtime_r( &t, &lt );
+					return lt.tm_gmtoff;
+				}( );
+				return result;
+			}
+
+		}	// namespace anonymous
 		std::string op_string( uint8_t op_code ) {
 			switch( op_code ) {
 				case 0x00: return "skip";
-				case 0x01: return "bolus_normal";
+				case 0x01: return "BolusNormal";
 				case 0x03: return "prime";
 				case 0x06: return "alarm_pump";
 				case 0x07: return "result_daily_total";
 				case 0x08: return "change_basal_profile_pattern";
 				case 0x09: return "change_basal_profile";
 				case 0x0A: return "cal_bg_for_ph";
-				case 0x0B: return "alarm_sensor"; 
+				case 0x0B: return "AlarmSensor"; 
 				case 0x0C: return "clear_alarm";
 				case 0x14: return "select_basal_profile";
 				case 0x16: return "temp_basal_duration";
 				case 0x17: return "change_time";
 				case 0x19: return "pump_low_battery";
-				case 0x1A: return "battery";
+				case 0x1A: return "Battery";
 				case 0x1E: return "suspend";
 				case 0x1F: return "resume";
 				case 0x21: return "rewind";
@@ -66,10 +79,10 @@ namespace daw {
 				case 0x32: return "change_alarm_clock_time";
 				case 0x33: return "temp_basal";
 				case 0x34: return "pump_low_reservoir";
-				case 0x35: return "alarm_clock_reminder";
+				case 0x35: return "AlarmClockReminder";
 				case 0x3B: return "questionable_3b";
 				case 0x3C: return "change_paradigm_linkid";
-				case 0x3F: return "bg_received";
+				case 0x3F: return "BGReceivedPumpEvent";
 				case 0x40: return "meal_marker";
 				case 0x41: return "exercise_marker";
 				case 0x42: return "manual_insulin_marker";
@@ -78,8 +91,8 @@ namespace daw {
 				case 0x56: return "change_sensor_rate_of_change_alert_setup";
 				case 0x57: return "change_bolus_scroll_step_size";
 				case 0x5A: return "change_bolus_wizard_setup";
-				case 0x5B: return "change_bolus_wizard_estimate";
-				case 0x5C: return "unabsorbed_insulin";
+				case 0x5B: return "BolusWizardBolusEstimate";
+				case 0x5C: return "UnabsorbedInsulin";
 				case 0x5E: return "change_variable_bolus";
 				case 0x5F: return "change_audio_bolus";
 				case 0x60: return "change_bg_reminder_enable";
@@ -95,7 +108,7 @@ namespace daw {
 				case 0x6D: return "model_522_result_totals";
 				case 0x6E: return "sara_6e";
 				case 0x6F: return "change_carb_units";
-				case 0x7B: return "basal_profile_start";
+				case 0x7B: return "BasalProfileStart";
 				case 0x7C: return "change_watch_dog_enable";
 				case 0x7D: return "change_other_device_id";
 				case 0x81: return "change_watch_dog_marriage_profile";
@@ -127,6 +140,7 @@ namespace daw {
 					using namespace boost::posix_time;
 					using namespace boost::gregorian;
 					ptime result { date { year, month, day }, time_duration { hour, minute, second } };
+					result = result - seconds( seconds_from_gmt( ) ); 
 					return result;
 				} catch( ... ) {
 					std::cerr << "WARNING: Could not parse timestamp year=" << static_cast<int>(year) << " month=" << static_cast<int>(month)
@@ -182,7 +196,7 @@ namespace daw {
 			}
 			
 			template<typename Container>
-			boost::optional<int64_t> parse_timestamp_in_array( Container const & data, size_t ts_offset, size_t ts_size ) noexcept {
+			boost::optional<boost::posix_time::ptime> parse_timestamp_in_array( Container const & data, size_t ts_offset, size_t ts_size ) noexcept {
 				boost::optional<boost::posix_time::ptime> result{ };	
 				switch( ts_size ) {
 				case 2:
@@ -192,10 +206,11 @@ namespace daw {
 					result = parse_timestamp( data.slice( ts_offset ) );
 					break;
 				}
-				if( result ) {
+				return result;
+/*				if( result ) {
 					return boost::optional<int64_t>{ milliseconds_since_epoch( *result ) };
 				}	
-				return boost::optional<int64_t>{ };
+				return boost::optional<int64_t>{ };*/
 			}
 
 			template<typename To, typename From>
@@ -236,7 +251,7 @@ namespace daw {
 				link_integral( "timestamp_offset", m_timestamp_offset );
 				link_integral( "timestamp_size", m_timestamp_size );
 				link_array( "data", m_data );
-				link_integral( "timestamp", m_timestamp );
+				link_timestamp( "timestamp", m_timestamp );
 
 			}
 
@@ -247,10 +262,11 @@ namespace daw {
 		}
 
 		boost::optional<boost::posix_time::ptime> history_entry_obj::timestamp( ) const {
-			if( !m_timestamp ) {
+			return m_timestamp;
+/*			if( !m_timestamp ) {
 				return  boost::optional<boost::posix_time::ptime>{ };
 			}
-			return ptime_from_int( *m_timestamp );	
+			return ptime_from_int( *m_timestamp );	*/
 		}
 
 		uint8_t history_entry_obj::op_code( ) const {
@@ -277,7 +293,7 @@ namespace daw {
 		hist_result_daily_total::~hist_result_daily_total( ) { }
 		hist_change_sensor_setup::~hist_change_sensor_setup( ) { }
 		hist_change_bolus_wizard_setup::~hist_change_bolus_wizard_setup( ) { }
-		hist_change_bolus_wizard_estimate::~hist_change_bolus_wizard_estimate( ) { }
+		hist_bolus_wizard_estimate::~hist_bolus_wizard_estimate( ) { }
 		hist_unabsorbed_insulin::~hist_unabsorbed_insulin( ) { }
 		
 		namespace {
@@ -314,19 +330,92 @@ namespace daw {
 		hist_result_daily_total::hist_result_daily_total( data_source_t data, pump_model_t pump_model ):
 			history_entry<0x07>( std::move( data ), pump_model.larger ? 10 : 7, std::move( pump_model ), 5, 2 ) { }
 
+		hist_bg_received::hist_bg_received( data_source_t data, pump_model_t pump_model ):
+				history_entry_static<0x3F, 10>{ std::move( data ), std::move( pump_model ) },
+				m_amount{ static_cast<uint8_t>((data[1] << 3) | (data[4] >> 5)) },
+				m_meter{ data.slice( 7, 10 ).to_hex_string( ) } {
+
+			link_integral( "amount", m_amount );
+			link_string( "meter", m_meter );
+		}
+
+		hist_bg_received::~hist_bg_received( ) { }
+
+		hist_basal_profile_start::hist_basal_profile_start( data_source_t data, pump_model_t pump_model ):
+				history_entry_static<0x7B, 10>{ std::move( data ), std::move( pump_model ) },
+				m_rate{ static_cast<double>(data[8])/40.0 },
+				m_offset{ static_cast<uint32_t>(data[7]) * 30 * 1000 * 60 },
+				m_profile_index{ data[1] } {
+
+			link_real( "rate", m_rate );
+			link_integral( "offset", m_offset );
+			link_integral( "profileIndex", m_profile_index );
+		}
+
+		hist_basal_profile_start::~hist_basal_profile_start( ) { }
+
+
+
 		hist_change_sensor_setup::hist_change_sensor_setup( data_source_t data, pump_model_t pump_model ):
 			history_entry<0x50>( std::move( data ), pump_model.has_low_suspend ? 41 : 37, std::move( pump_model ) ) { }
 
 		hist_change_bolus_wizard_setup::hist_change_bolus_wizard_setup( data_source_t data, pump_model_t pump_model ):
 			history_entry<0x5A>( std::move( data ), pump_model.larger ? 144 : 124, std::move( pump_model ) ) { }
 
-		hist_change_bolus_wizard_estimate::hist_change_bolus_wizard_estimate( data_source_t data, pump_model_t pump_model ):
-			history_entry<0x5B> { std::move( data ), static_cast<size_t>(pump_model.larger ? 22 : 20), pump_model } { }
+		namespace {
+			auto bolus_wizard_insulin_decoder( uint8_t a, uint8_t b ) {
+				return static_cast<double>((static_cast<uint16_t>(a) << static_cast<uint16_t>(8)) | static_cast<uint16_t>(b)) / 40.0;
+			}
+
+			auto bolus_wizard_correction_decoder_lrg( uint8_t a, uint8_t b ) {
+				return static_cast<double>((static_cast<uint16_t>(a & 0b00111000) << static_cast<uint16_t>(5)) | static_cast<uint16_t>(b)) / 40.0;
+			}
+
+			auto bolus_wizard_correction_decoder( uint8_t a, uint8_t b ) {
+				return static_cast<double>((static_cast<uint16_t>(a) << static_cast<uint16_t>(8)) | static_cast<uint16_t>(b)) / 10.0;
+			}
+
+			auto bolus_wizard_insulin_decoder( uint8_t a ) {
+				return static_cast<double>(a)/10.0;	
+			}
+
+			auto bolus_wizard_carb_ratio_decoder( uint8_t a, uint8_t b ) {
+				return static_cast<double>((static_cast<uint16_t>(a & 0b00000111) << static_cast<uint16_t>(8)) | static_cast<uint16_t>(b)) / 10.0;
+			}
+
+		}
+	
+		hist_bolus_wizard_estimate::hist_bolus_wizard_estimate( data_source_t data, pump_model_t pump_model ):
+				history_entry<0x5B> { std::move( data ), static_cast<size_t>(pump_model.larger ? 22 : 20), pump_model },
+				m_carbohydrates{ pump_model.larger ? static_cast<uint16_t>((static_cast<uint16_t>(data[8] & 0b00001100) << static_cast<uint16_t>(6)) | static_cast<uint16_t>(data[7])) : static_cast<uint16_t>(data[7]) },
+				m_blood_glucose{ static_cast<uint16_t>(static_cast<uint16_t>(static_cast<uint16_t>(data[8] & 0b00000011) << 8) | static_cast<uint16_t>(data[1])) },
+				m_insulin_food_estimate{ pump_model.larger ? bolus_wizard_insulin_decoder( data[14], data[15] ) : bolus_wizard_insulin_decoder( data[13] ) },
+				m_insulin_correction_estimate{ pump_model.larger ? bolus_wizard_correction_decoder_lrg( data[16], data[13] ) : bolus_wizard_correction_decoder( data[14], data[12] ) } ,
+				m_insulin_bolus_estimate{ pump_model.larger ? bolus_wizard_insulin_decoder( data[19], data[20] ) : bolus_wizard_insulin_decoder( data[18] ) },
+				m_unabsorbed_insulin_total{ pump_model.larger ? bolus_wizard_insulin_decoder( data[17], data[18] ) : bolus_wizard_insulin_decoder( data[16] ) },
+				m_bg_target_low{ pump_model.larger ? data[12] : data[11] },
+				m_bg_target_high{ pump_model.larger ? data[21] : data[19] },
+				m_insulin_sensitivity{ pump_model.larger ? data[11] : data[10] },
+				m_carbohydrate_ratio{ pump_model.larger ? bolus_wizard_carb_ratio_decoder( data[9], data[10] ) : static_cast<double>(data[9]) } {
+
+				link_integral( "carbInput", m_carbohydrates );
+				link_integral( "bg", m_blood_glucose );
+				link_real( "foodEstimate", m_insulin_food_estimate );
+				link_real( "correctionEstimate", m_insulin_correction_estimate );
+				link_real( "bolusEstimate", m_insulin_bolus_estimate );
+				link_real( "unabsorbedInsulinTotal", m_unabsorbed_insulin_total );
+				link_integral( "bgTargetLow", m_bg_target_low );
+				link_integral( "bgTargetHigh", m_bg_target_high );
+				link_real( "carbRatio", m_carbohydrate_ratio );
+
+			}
+
+
 
 		hist_unabsorbed_insulin::unabsorbed_insulin_record_t::~unabsorbed_insulin_record_t( ) { }
 
 		hist_unabsorbed_insulin::unabsorbed_insulin_record_t::unabsorbed_insulin_record_t( double amount, uint32_t age ):
-			daw::json::JsonLink<hist_unabsorbed_insulin::unabsorbed_insulin_record_t>( "unabsorbed_insulin_record" ),				
+			daw::json::JsonLink<hist_unabsorbed_insulin::unabsorbed_insulin_record_t>{ },
 			m_amount{ amount },
 			m_age{ age } {
 
@@ -393,7 +482,7 @@ namespace daw {
 							case 0x56: return new hist_change_sensor_rate_of_change_alert_setup( std::forward<Args>( args )... );
 							case 0x57: return new hist_change_bolus_scroll_step_size( std::forward<Args>( args )... );
 							case 0x5A: return new hist_change_bolus_wizard_setup( std::forward<Args>( args )... );
-							case 0x5B: return new hist_change_bolus_wizard_estimate( std::forward<Args>( args )... );
+							case 0x5B: return new hist_bolus_wizard_estimate( std::forward<Args>( args )... );
 							case 0x5C: return new hist_unabsorbed_insulin( std::forward<Args>( args )... );
 							case 0x5E: return new hist_change_variable_bolus( std::forward<Args>( args )... );
 							case 0x5F: return new hist_change_audio_bolus( std::forward<Args>( args )... );

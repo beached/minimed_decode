@@ -93,7 +93,19 @@ namespace daw {
 		using hist_alarm_clock_reminder = history_entry_static<0x35>;
 		using hist_questionable_3b = history_entry_static<0x3B>;
 		using hist_change_paradigm_linkid = history_entry_static<0x3C, 21>;
-		using hist_bg_received = history_entry_static<0x3F, 10>;
+
+		struct hist_bg_received: public history_entry_static<0x3F, 10> {
+			uint8_t m_amount;
+			std::string m_meter;
+			hist_bg_received( data_source_t data, pump_model_t pump_model );
+
+			virtual ~hist_bg_received( );
+			hist_bg_received( hist_bg_received const & ) = default;
+			hist_bg_received( hist_bg_received && ) = default;
+			hist_bg_received & operator=( hist_bg_received const & ) = default;
+			hist_bg_received & operator=( hist_bg_received && ) = default;
+		};	// hist_bg_received
+
 		using hist_meal_marker = history_entry_static<0x40, 9>;
 		using hist_exercise_marker = history_entry_static<0x41, 8>;
 		using hist_manual_insulin_marker = history_entry_static<0x42, 8>;
@@ -111,10 +123,21 @@ namespace daw {
 			virtual ~hist_change_bolus_wizard_setup( );
 		};	// hist_change_bolus_wizard_setup
 
-		struct hist_change_bolus_wizard_estimate: public history_entry<0x5B> {
-			hist_change_bolus_wizard_estimate( data_source_t data, pump_model_t pump_model );
-			virtual ~hist_change_bolus_wizard_estimate( );
-		};	// hist_change_bolus_wizard_estimate
+		struct hist_bolus_wizard_estimate: public history_entry<0x5B> {
+			uint16_t m_carbohydrates;
+			uint16_t m_blood_glucose;
+			double m_insulin_food_estimate;
+			double m_insulin_correction_estimate;
+			double m_insulin_bolus_estimate;
+			double m_unabsorbed_insulin_total;
+			uint8_t m_bg_target_low;
+			uint8_t m_bg_target_high;
+			uint8_t m_insulin_sensitivity;
+			double m_carbohydrate_ratio;
+
+			hist_bolus_wizard_estimate( data_source_t data, pump_model_t pump_model );
+			virtual ~hist_bolus_wizard_estimate( );
+		};	// hist_bolus_wizard_estimate
 
 		struct hist_unabsorbed_insulin: public history_entry<0x5C> {
 			struct unabsorbed_insulin_record_t: public daw::json::JsonLink<unabsorbed_insulin_record_t>  {
@@ -151,7 +174,22 @@ namespace daw {
 		using hist_model_522_result_totals = history_entry_static<0x6D, 44, 1, 2>;
 		using hist_sara_6e = history_entry_static<0x6E, 52, 1, 2>;
 		using hist_change_carb_units = history_entry_static<0x6F>;
-		using hist_basal_profile_start = history_entry_static<0x7B, 10>;
+
+		struct hist_basal_profile_start: public history_entry_static<0x7B, 10> {
+			double m_rate;
+			uint32_t m_offset;
+			uint8_t m_profile_index;
+
+			hist_basal_profile_start( data_source_t data, pump_model_t pump_model );
+
+			virtual ~hist_basal_profile_start( );
+			hist_basal_profile_start( hist_basal_profile_start const & ) = default;
+			hist_basal_profile_start( hist_basal_profile_start && ) = default;
+			hist_basal_profile_start & operator=( hist_basal_profile_start const & ) = default;
+			hist_basal_profile_start & operator=( hist_basal_profile_start && ) = default;
+		};	// hist_basal_profile_start
+
+
 		using hist_change_watch_dog_enable = history_entry_static<0x7C>;
 		using hist_change_other_device_id = history_entry_static<0x7D, 37>;
 		using hist_change_watch_dog_marriage_profile = history_entry_static<0x81, 12>;
