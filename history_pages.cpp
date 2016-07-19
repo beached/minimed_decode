@@ -40,14 +40,20 @@ namespace daw {
 				return ss.str( );
 			}
 			
-			auto seconds_from_gmt( ) {
+			uint32_t seconds_from_gmt( ) {
+#ifdef WIN32
+#pragma message ("Warning: GMT Offset set to 0 seconds")
+				return 0;
+#else
 				static auto const result = []( ) { 
 					time_t t = time( nullptr );
 					struct tm lt = {0};
-					localtime_r( &t, &lt );
+					daw::localtime_s( &lt, &t );
+					
 					return lt.tm_gmtoff;
 				}( );
 				return result;
+#endif
 			}
 
 		}	// namespace anonymous
