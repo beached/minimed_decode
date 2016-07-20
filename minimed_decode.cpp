@@ -88,13 +88,35 @@ int main( int argc, char** argv ) {
 		return i->timestamp( )->date( ).year( ) == current_year( );
 	};
 
+	auto reasonible_year = []( auto const & i ) {
+		if( i->timestamp( ) ) {
+			auto item_year = i->timestamp( )->date( ).year( );
+			auto this_year = current_year( );
+			if( item_year < this_year - 2 ) {
+				return false;
+			}
+			if( item_year > this_year + 2 ) {
+				return false;
+			}
+		}
+		return true;	// Not all items have timestamps
+	};
+
 	while( !range.at_end( ) ) {
-		std::cout << std::dec << std::dec << pos+1 << "/" << v.size( ) << ": ";
 		auto item = daw::history::create_history_entry( range, pump_model, pos );
+
 		if( item ) {
-			std::cout << *item;
+			if( item->op_code( ) == 0x0 ) {
+				continue;
+			}
+			std::cout << std::dec << std::dec << pos+1 << "/" << v.size( ) << ": ";
+			if( !reasonible_year( item ) ) {
+				std::cerr << "WARNING: The year does not look correct, outside of plus or minute 2 years from current system year\n";
+			}
+			std::cout << item->encode( );
 			entries.push_back( std::move( item ) );
 		} else {
+			std::cout << std::dec << std::dec << pos+1 << "/" << v.size( ) << ": ";
 			std::cout << "ERROR: data( ";
 			auto err_start = pos;
 			safe_advance( range, 1 );
@@ -104,14 +126,13 @@ int main( int argc, char** argv ) {
 			}
 			auto offset = item ? item->size( ) - 1 : 0;
 			std::cout << (pos-(err_start+offset)) << " ) { ";
-			display( daw::range::make_range( v.data( ) + err_start, v.data( ) + pos - offset ) );
-			std::cout << " }\n";
+			std::cout << daw::range::make_range( v.data( ) + err_start, v.data( ) + pos - offset ).to_hex_string( ) << " }\n";
 			if( !range.at_end( ) ) {
-				std::cout << std::dec << std::dec << (pos-offset)+1 << "/" << v.size( ) << ": " << *item;
+				std::cout << std::dec << std::dec << (pos-offset)+1 << "/" << v.size( ) << ": " << item->encode( );
 				entries.push_back( std::move( item ) );
 			}
 		}
-		std::cout << "\n";
+		std::cout << "\n\n";
 	}
 	return EXIT_SUCCESS;
 }

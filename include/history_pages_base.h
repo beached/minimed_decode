@@ -28,6 +28,8 @@
 #include <daw/daw_range.h>
 #include <cstdint>
 #include <vector>
+#include <daw/json/daw_json.h>
+#include <daw/json/daw_json_link.h>
 
 namespace daw {
 	namespace history {
@@ -50,27 +52,23 @@ namespace daw {
 			pump_model_t & operator=( pump_model_t && ) = default;
 		};	// pump_model_t
 
-		boost::optional<boost::posix_time::ptime> parse_date( data_source_t const & arry ) noexcept;
-		boost::optional<boost::posix_time::ptime> parse_timestamp( data_source_t const & arry ) noexcept;
-
-		class history_entry_obj {
+		class history_entry_obj: public daw::json::JsonLink<history_entry_obj> {
 			uint8_t m_op_code; 
-			data_source_t m_data;
 			size_t m_size;
 			size_t m_timestamp_offset;
 			size_t m_timestamp_size;
+			std::vector<uint8_t> m_data;
+			boost::optional<boost::posix_time::ptime> m_timestamp;
+	
 		protected:
-			history_entry_obj( data_source_t data, size_t data_size, pump_model_t, size_t timestamp_offset = 2, size_t timestamp_size = 5 );
+			history_entry_obj( data_source_t data, bool is_decoded, size_t data_size, pump_model_t, size_t timestamp_offset = 2, size_t timestamp_size = 5 );
 		public:
 			virtual ~history_entry_obj( );
-			virtual std::string to_string( ) const;
 			uint8_t op_code( ) const;
-			data_source_t & data( );
-			data_source_t const & data( ) const;
+			std::vector<uint8_t> const & data( ) const;
 			size_t size( ) const;
 			size_t timestamp_offset( ) const; 
 			size_t timestamp_size( ) const; 
-
 			boost::optional<boost::posix_time::ptime> timestamp( ) const;
 			std::tuple<uint8_t, size_t, size_t, size_t> register_event_type( ) const;
 
@@ -84,8 +82,8 @@ namespace daw {
 		template<uint8_t child_op_code>
 		class history_entry: public history_entry_obj {
 		protected:
-			history_entry( data_source_t data, size_t data_size, pump_model_t pump_model, size_t timestamp_offset = 2, size_t timestamp_size = 5 ): 
-				history_entry_obj{ std::move( data ), data_size, std::move( pump_model ), timestamp_offset, timestamp_size } { }
+			explicit history_entry( data_source_t data, bool is_decoded, size_t data_size, pump_model_t pump_model, size_t timestamp_offset = 2, size_t timestamp_size = 5 ): 
+				history_entry_obj{ std::move( data ), is_decoded, data_size, std::move( pump_model ), timestamp_offset, timestamp_size } { }
 
 		public:
 			virtual ~history_entry( ) = default;
@@ -95,10 +93,10 @@ namespace daw {
 			history_entry & operator=( history_entry && ) = default;			
 		};	// history_entry
 
-		template<uint8_t child_op_code, size_t child_size = 7, size_t child_timestamp_offset = 2, size_t child_timestamp_size = 5>
+		template<uint8_t child_op_code, bool is_decoded = false, size_t child_size = 7, size_t child_timestamp_offset = 2, size_t child_timestamp_size = 5>
 		struct history_entry_static: public history_entry<child_op_code> {
 			history_entry_static( data_source_t data, pump_model_t pump_model ):
-				history_entry<child_op_code>{ std::move( data ), child_size, std::move( pump_model ), child_timestamp_offset, child_timestamp_size } { }
+				history_entry<child_op_code>{ std::move( data ), is_decoded, child_size, std::move( pump_model ), child_timestamp_offset, child_timestamp_size } { }
 
 			virtual ~history_entry_static( ) = default;
 			history_entry_static( history_entry_static const & ) = default;
