@@ -110,21 +110,30 @@ namespace daw {
 		using hist_alarm_sensor = history_entry_static<0x0B, false, 8, 3>;
 		using hist_clear_alarm = history_entry_static<0x0C>;
 
-		using hist_select_basal_profile = history_entry_static<0x14>;
-		struct hist_change_time: public history_entry_static<0x17, false, 14, 9> {
-			boost::posix_time::ptime m_old_timestamp;
+		// Test this, but I see what looks like the idx changes I use
+		struct hist_select_basal_profile: public history_entry_static<0x14, false> {
+			uint8_t m_basal_profile_index;
 
-			hist_change_time( data_source_t data, pump_model_t pump_model );
+			hist_select_basal_profile( data_source_t data, pump_model_t pump_model );
 
-			virtual ~hist_change_time( );
-			hist_change_time( hist_change_time const & ) = default;
-			hist_change_time( hist_change_time && ) = default;
-			hist_change_time & operator=( hist_change_time const & ) = default;
-			hist_change_time & operator=( hist_change_time && ) = default;
-		};	// hist_change_time
+			virtual ~hist_select_basal_profile( );
+			hist_select_basal_profile( hist_select_basal_profile const & ) = default;
+			hist_select_basal_profile( hist_select_basal_profile && ) = default;
+			hist_select_basal_profile & operator=( hist_select_basal_profile const & ) = default;
+			hist_select_basal_profile & operator=( hist_select_basal_profile && ) = default;
+		};	// hist_select_basal_profile
 
+		struct hist_temp_basal_duration: public history_entry_static<0x16, true> {
+			uint16_t m_duration_minutes;
 
-		using hist_temp_basal_duration = history_entry_static<0x16>;
+			hist_temp_basal_duration( data_source_t data, pump_model_t pump_model );
+
+			virtual ~hist_temp_basal_duration( );
+			hist_temp_basal_duration( hist_temp_basal_duration const & ) = default;
+			hist_temp_basal_duration( hist_temp_basal_duration && ) = default;
+			hist_temp_basal_duration & operator=( hist_temp_basal_duration const & ) = default;
+			hist_temp_basal_duration & operator=( hist_temp_basal_duration && ) = default;
+		};	// hist_temp_basal_duration
 
 		struct hist_change_time: public history_entry_static<0x17, false, 14, 9> {
 			boost::posix_time::ptime m_old_timestamp;
@@ -150,7 +159,20 @@ namespace daw {
 		using hist_change_max_basal = history_entry_static<0x2C>;
 		using hist_change_bg_reminder_offset = history_entry_static<0x31>;
 		using hist_change_alarm_clock_time = history_entry_static<0x32, false, 14>;
-		using hist_temp_basal = history_entry_static<0x33, false, 8>;
+
+		struct hist_temp_basal: public history_entry_static<0x33, true, 8> {
+			std::string m_rate_type;
+			double m_rate;
+			
+			hist_temp_basal( data_source_t data, pump_model_t pump_model );
+
+			virtual ~hist_temp_basal( );
+			hist_temp_basal( hist_temp_basal const & ) = default;
+			hist_temp_basal( hist_temp_basal && ) = default;
+			hist_temp_basal & operator=( hist_temp_basal const & ) = default;
+			hist_temp_basal & operator=( hist_temp_basal && ) = default;
+		};	// hist_temp_basal
+	
 		using hist_pump_low_reservoir = history_entry_static<0x34>;
 		using hist_alarm_clock_reminder = history_entry_static<0x35>;
 		using hist_questionable_3b = history_entry_static<0x3B>;

@@ -65,11 +65,11 @@ namespace daw {
 				case 0x0B: return "AlarmSensor"; 
 				case 0x0C: return "ClearAlarm";
 				case 0x14: return "SelectBasalProfile";
-				case 0x16: return "temp_basal_duration";
+				case 0x16: return "TempBasal";	// hist_temp_basal_duration
 				case 0x17: return "ChangeTime";
 				case 0x19: return "JournalEntryPumpLowBattery";
 				case 0x1A: return "Battery";
-				case 0x1E: return "suspend";
+				case 0x1E: return "Suspend";
 				case 0x1F: return "Resume";
 				case 0x21: return "Rewind";
 				case 0x23: return "ChangeChildBlockEnable";
@@ -78,7 +78,7 @@ namespace daw {
 				case 0x2C: return "ChangeMaxBasal";
 				case 0x31: return "ChangeBGReminderOffset";
 				case 0x32: return "ChangeAlarmClockTime";
-				case 0x33: return "temp_basal";
+				case 0x33: return "TempBasal";
 				case 0x34: return "JournalEntryPumpLowReservoir";
 				case 0x35: return "AlarmClockReminder";
 				case 0x3B: return "questionable_3b";
@@ -98,7 +98,7 @@ namespace daw {
 				case 0x5F: return "ChangeAudioBolus";
 				case 0x60: return "ChangeBGReminderEnable";
 				case 0x61: return "ChangeAlarmClockEnable";
-				case 0x62: return "TempBasal";
+				case 0x62: return "TempBasal";	// hist_change_temp_basal_type
 				case 0x63: return "ChangeAlarmNotifyMode";
 				case 0x64: return "ChangeTimeFormat";
 				case 0x65: return "ChangeReservoirWarningTime";
@@ -272,7 +272,6 @@ namespace daw {
 		hist_change_sensor_setup::~hist_change_sensor_setup( ) { }
 		hist_change_bolus_wizard_setup::~hist_change_bolus_wizard_setup( ) { }
 		hist_bolus_wizard_estimate::~hist_bolus_wizard_estimate( ) { }
-		hist_unabsorbed_insulin::~hist_unabsorbed_insulin( ) { }
 		
 		namespace {
 			template<typename T, typename Container>
@@ -354,15 +353,45 @@ namespace daw {
 
 		hist_cal_bg_for_ph::~hist_cal_bg_for_ph( ) { }
 		
+		hist_select_basal_profile::hist_select_basal_profile( data_source_t data, pump_model_t pump_model ):
+				history_entry_static<0x14, false>{ std::move( data ), std::move( pump_model ) },
+				m_basal_profile_index{ data[1] } {
 
-		 hist_change_time::hist_change_time( data_source_t data, pump_model_t pump_model ):
+			link_integral( "BasalProfileIndex", m_basal_profile_index );
+		}
+
+		hist_select_basal_profile::~hist_select_basal_profile( ) { }
+
+		hist_temp_basal_duration::hist_temp_basal_duration( data_source_t data, pump_model_t pump_model ):
+				history_entry_static<0x16, true>{ std::move( data ), std::move( pump_model ) },
+				m_duration_minutes{ static_cast<uint16_t>(static_cast<uint16_t>(data[1]) * 30) } {
+			
+			link_integral( "duration", m_duration_minutes );
+		}
+
+		hist_temp_basal_duration::~hist_temp_basal_duration( ) { }
+
+		hist_change_time::hist_change_time( data_source_t data, pump_model_t pump_model ):
 				history_entry_static<0x17, false, 14, 9>{ std::move( data ), std::move( pump_model ) },
 				m_old_timestamp{ *parse_timestamp( data.slice( 2 ) ) } {
 
 			link_timestamp( "oldTimeStamp", m_old_timestamp );
-		 }
+		}
 
 		hist_change_time::~hist_change_time( ) { }
+
+
+
+		hist_temp_basal::hist_temp_basal( data_source_t data, pump_model_t pump_model ):
+				history_entry_static<0x33, true, 8>{ std::move( data ), std::move( pump_model ) },
+				m_rate_type{ (data[7] >> 3) == 0 ? "absolute" : "percent" },
+				m_rate{ (data[7] >> 3) == 0 ? static_cast<double>(data[1])/40.0 : static_cast<double>(data[1]) } {
+				
+			link_string( "rateType", m_rate_type );
+			link_real( "rate", m_rate );
+		}
+
+		hist_temp_basal::~hist_temp_basal( ) { }
 
 		hist_basal_profile_start::hist_basal_profile_start( data_source_t data, pump_model_t pump_model ):
 				history_entry_static<0x7B, true, 10>{ std::move( data ), std::move( pump_model ) },
@@ -433,6 +462,7 @@ namespace daw {
 		}
 
 		hist_unabsorbed_insulin::unabsorbed_insulin_record_t::~unabsorbed_insulin_record_t( ) { }
+		hist_unabsorbed_insulin::~hist_unabsorbed_insulin( ) { }
 
 		hist_unabsorbed_insulin::unabsorbed_insulin_record_t::unabsorbed_insulin_record_t( double amount, uint32_t age ):
 			daw::json::JsonLink<hist_unabsorbed_insulin::unabsorbed_insulin_record_t>{ },
