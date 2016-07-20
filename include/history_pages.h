@@ -32,7 +32,7 @@ namespace daw {
 	namespace history {
 		// Known History Entries in order of op_code
 
-		using hist_skip = history_entry_static<0x00, 1, 0, 0>;
+		using hist_skip = history_entry_static<0x00, true, 1, 0, 0>;
 
 		enum class bolus_type_t: uint8_t {
 			normal,
@@ -56,8 +56,32 @@ namespace daw {
 
 		};	// hist_bolus_normal
 
-		using hist_prime = history_entry_static<0x03, 10, 5>;
-		using hist_alarm_pump = history_entry_static<0x06, 9, 4>;
+		struct hist_prime: public history_entry_static<0x03, true, 10, 5> {
+			double m_amount;
+			std::string m_prime_type;
+			double m_programmed_amount;
+
+			hist_prime( data_source_t data, pump_model_t pump_model );
+
+			virtual ~hist_prime( );
+			hist_prime( hist_prime const & ) = default;
+			hist_prime( hist_prime && ) = default;
+			hist_prime & operator=( hist_prime const & ) = default;
+			hist_prime & operator=( hist_prime && ) = default;
+		};	// hist_prime
+
+		struct hist_alarm_pump: public history_entry_static<0x06, false, 9, 4> {
+			uint8_t m_raw_type;
+
+			hist_alarm_pump( data_source_t data, pump_model_t pump_model );
+
+			virtual ~hist_alarm_pump( );
+			hist_alarm_pump( hist_alarm_pump const & ) = default;
+			hist_alarm_pump( hist_alarm_pump && ) = default;
+			hist_alarm_pump & operator=( hist_alarm_pump const & ) = default;
+			hist_alarm_pump & operator=( hist_alarm_pump && ) = default;
+		};	// hist_alarm_pump
+
 
 		struct hist_result_daily_total: public history_entry<0x07> {
 			hist_result_daily_total( data_source_t data, pump_model_t pump_model );
@@ -69,14 +93,52 @@ namespace daw {
 			hist_result_daily_total & operator=( hist_result_daily_total && ) = default;
 		};	// hist_result_daily_total
 
-		using hist_change_basal_profile_pattern = history_entry_static<0x08, 152>;
-		using hist_change_basal_profile = history_entry_static<0x09, 152>;
-		using hist_cal_bg_for_ph = history_entry_static<0x0A>;
-		using hist_alarm_sensor = history_entry_static<0x0B, 8, 3>;
+		using hist_change_basal_profile_pattern = history_entry_static<0x08, false, 152>;
+		using hist_change_basal_profile = history_entry_static<0x09, false, 152>;
+
+		struct hist_cal_bg_for_ph: public history_entry_static<0x0A, true> {
+			uint16_t m_amount;
+			hist_cal_bg_for_ph( data_source_t data, pump_model_t pump_model );
+
+			virtual ~hist_cal_bg_for_ph( );
+			hist_cal_bg_for_ph( hist_cal_bg_for_ph const & ) = default;
+			hist_cal_bg_for_ph( hist_cal_bg_for_ph && ) = default;
+			hist_cal_bg_for_ph & operator=( hist_cal_bg_for_ph const & ) = default;
+			hist_cal_bg_for_ph & operator=( hist_cal_bg_for_ph && ) = default;
+		};	// hist_cal_bg_for_ph
+
+		using hist_alarm_sensor = history_entry_static<0x0B, false, 8, 3>;
 		using hist_clear_alarm = history_entry_static<0x0C>;
+
 		using hist_select_basal_profile = history_entry_static<0x14>;
+		struct hist_change_time: public history_entry_static<0x17, false, 14, 9> {
+			boost::posix_time::ptime m_old_timestamp;
+
+			hist_change_time( data_source_t data, pump_model_t pump_model );
+
+			virtual ~hist_change_time( );
+			hist_change_time( hist_change_time const & ) = default;
+			hist_change_time( hist_change_time && ) = default;
+			hist_change_time & operator=( hist_change_time const & ) = default;
+			hist_change_time & operator=( hist_change_time && ) = default;
+		};	// hist_change_time
+
+
 		using hist_temp_basal_duration = history_entry_static<0x16>;
-		using hist_change_time = history_entry_static<0x17, 14, 9>;
+
+		struct hist_change_time: public history_entry_static<0x17, false, 14, 9> {
+			boost::posix_time::ptime m_old_timestamp;
+
+			hist_change_time( data_source_t data, pump_model_t pump_model );
+
+			virtual ~hist_change_time( );
+			hist_change_time( hist_change_time const & ) = default;
+			hist_change_time( hist_change_time && ) = default;
+			hist_change_time & operator=( hist_change_time const & ) = default;
+			hist_change_time & operator=( hist_change_time && ) = default;
+		};	// hist_change_time
+
+
 		using hist_pump_low_battery = history_entry_static<0x19>;
 		using hist_battery = history_entry_static<0x1A>;
 		using hist_suspend = history_entry_static<0x1E>;
@@ -84,17 +146,17 @@ namespace daw {
 		using hist_rewind = history_entry_static<0x21>;
 		using hist_change_child_block_enable = history_entry_static<0x23>;
 		using hist_change_max_bolus = history_entry_static<0x24>;
-		using hist_enable_disable_remote = history_entry_static<0x26, 21>;
+		using hist_enable_disable_remote = history_entry_static<0x26, false, 21>;
 		using hist_change_max_basal = history_entry_static<0x2C>;
 		using hist_change_bg_reminder_offset = history_entry_static<0x31>;
-		using hist_change_alarm_clock_time = history_entry_static<0x32, 14>;
-		using hist_temp_basal = history_entry_static<0x33, 8>;
+		using hist_change_alarm_clock_time = history_entry_static<0x32, false, 14>;
+		using hist_temp_basal = history_entry_static<0x33, false, 8>;
 		using hist_pump_low_reservoir = history_entry_static<0x34>;
 		using hist_alarm_clock_reminder = history_entry_static<0x35>;
 		using hist_questionable_3b = history_entry_static<0x3B>;
-		using hist_change_paradigm_linkid = history_entry_static<0x3C, 21>;
+		using hist_change_paradigm_linkid = history_entry_static<0x3C, false, 21>;
 
-		struct hist_bg_received: public history_entry_static<0x3F, 10> {
+		struct hist_bg_received: public history_entry_static<0x3F, true, 10> {
 			uint8_t m_amount;
 			std::string m_meter;
 			hist_bg_received( data_source_t data, pump_model_t pump_model );
@@ -106,11 +168,11 @@ namespace daw {
 			hist_bg_received & operator=( hist_bg_received && ) = default;
 		};	// hist_bg_received
 
-		using hist_meal_marker = history_entry_static<0x40, 9>;
-		using hist_exercise_marker = history_entry_static<0x41, 8>;
-		using hist_manual_insulin_marker = history_entry_static<0x42, 8>;
-		using hist_other_marker = history_entry_static<0x43, 7>;
-		using hist_change_sensor_rate_of_change_alert_setup = history_entry_static<0x56, 12>;
+		using hist_meal_marker = history_entry_static<0x40, false, 9>;
+		using hist_exercise_marker = history_entry_static<0x41, false, 8>;
+		using hist_manual_insulin_marker = history_entry_static<0x42, false, 8>;
+		using hist_other_marker = history_entry_static<0x43, false, 7>;
+		using hist_change_sensor_rate_of_change_alert_setup = history_entry_static<0x56, false, 12>;
 		using hist_change_bolus_scroll_step_size = history_entry_static<0x57>;
 
 		struct hist_change_sensor_setup: public history_entry<0x50> {
@@ -163,19 +225,45 @@ namespace daw {
 		using hist_change_audio_bolus = history_entry_static<0x5F>;
 		using hist_change_bg_reminder_enable = history_entry_static<0x60>;
 		using hist_change_alarm_clock_enable = history_entry_static<0x61>;
-		using hist_change_temp_basal_type = history_entry_static<0x62>;
+
+		struct hist_change_temp_basal_type: public history_entry_static<0x62, true> {
+			std::string m_basal_type;
+
+			hist_change_temp_basal_type( data_source_t data, pump_model_t pump_model );
+
+			virtual ~hist_change_temp_basal_type( );
+			hist_change_temp_basal_type( hist_change_temp_basal_type const & ) = default;
+			hist_change_temp_basal_type( hist_change_temp_basal_type && ) = default;
+			hist_change_temp_basal_type & operator=( hist_change_temp_basal_type const & ) = default;
+			hist_change_temp_basal_type & operator=( hist_change_temp_basal_type && ) = default;
+		};	// hist_change_temp_basal_type
+
+
 		using hist_change_alarm_notify_mode = history_entry_static<0x63>;
-		using hist_change_time_format = history_entry_static<0x64>;
+
+		struct hist_change_time_format: public history_entry_static<0x64, true> {
+			std::string m_time_format;
+
+			hist_change_time_format( data_source_t data, pump_model_t pump_model );
+
+			virtual ~hist_change_time_format( );
+			hist_change_time_format( hist_change_time_format const & ) = default;
+			hist_change_time_format( hist_change_time_format && ) = default;
+			hist_change_time_format & operator=( hist_change_time_format const & ) = default;
+			hist_change_time_format & operator=( hist_change_time_format && ) = default;
+		};	// hist_change_time_format
+
+
 		using hist_change_reservoir_warning_time = history_entry_static<0x65>;
 		using hist_change_bolus_reminder_enable = history_entry_static<0x66>;
 		using hist_change_bolus_reminder_time = history_entry_static<0x67>;
-		using hist_delete_bolus_reminder_time = history_entry_static<0x68, 9>;
-		using hist_delete_alarm_clock_time = history_entry_static<0x6A, 14>;
-		using hist_model_522_result_totals = history_entry_static<0x6D, 44, 1, 2>;
-		using hist_sara_6e = history_entry_static<0x6E, 52, 1, 2>;
+		using hist_delete_bolus_reminder_time = history_entry_static<0x68, false, 9>;
+		using hist_delete_alarm_clock_time = history_entry_static<0x6A, false, 14>;
+		using hist_model_522_result_totals = history_entry_static<0x6D, false, 44, 1, 2>;
+		using hist_sara_6e = history_entry_static<0x6E, false, 52, 1, 2>;
 		using hist_change_carb_units = history_entry_static<0x6F>;
 
-		struct hist_basal_profile_start: public history_entry_static<0x7B, 10> {
+		struct hist_basal_profile_start: public history_entry_static<0x7B, true, 10> {
 			double m_rate;
 			uint32_t m_offset;
 			uint8_t m_profile_index;
@@ -191,9 +279,9 @@ namespace daw {
 
 
 		using hist_change_watch_dog_enable = history_entry_static<0x7C>;
-		using hist_change_other_device_id = history_entry_static<0x7D, 37>;
-		using hist_change_watch_dog_marriage_profile = history_entry_static<0x81, 12>;
-		using hist_delete_other_device_id = history_entry_static<0x82, 12>;
+		using hist_change_other_device_id = history_entry_static<0x7D, false, 37>;
+		using hist_change_watch_dog_marriage_profile = history_entry_static<0x81, false, 12>;
+		using hist_delete_other_device_id = history_entry_static<0x82, false, 12>;
 		using hist_change_capture_event_enable = history_entry_static<0x83>;
 	}	// namespace history
 }	// namespace daw
