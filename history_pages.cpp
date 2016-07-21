@@ -354,7 +354,8 @@ namespace daw {
 				if( use_carb_exchange( d8 ) ) {
 					return static_cast<double>( d7 );
 				} else {
-					return static_cast<double>(static_cast<uint16_t>(impl::read_bit( d8, 1 ) << 8) | static_cast<uint8_t>( d7 ));
+					auto result = static_cast<double>(static_cast<uint16_t>(impl::read_bit( d8, 1 ) << 8) | static_cast<uint8_t>(d7));
+					return result;
 				}
 
 			}

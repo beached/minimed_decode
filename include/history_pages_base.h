@@ -35,10 +35,10 @@ namespace daw {
 	namespace history {
 		namespace impl {
 			template<typename T>
-			bool read_bit( T const & v, uint8_t bit ) {
+			T read_bit( T const & v, uint8_t bit ) {
 				static_assert( std::is_integral<T>::value && std::is_unsigned<T>::value, "T must be an unsigned integral" );
 				assert( bit < sizeof( T ) * 8 );	
-				auto result = (v & (1 << bit)) != 0;
+				auto result = static_cast<T>(static_cast<T>(v & static_cast<T>(1 << bit)) >> bit);
 				return result;
 			}
 
