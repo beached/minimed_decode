@@ -42,19 +42,6 @@ namespace {
 		return boost::posix_time::second_clock::local_time( ).date( ).year( );
 	}
 
-	std::string read_file( std::string file_name ) {
-		std::ifstream ifs( file_name.c_str( ) );
-		std::string result;
-
-		ifs.seekg( 0, std::ios::end );
-		result.reserve( static_cast<size_t>(ifs.tellg( )) );
-		ifs.seekg( 0, std::ios::beg );
-
-		result.assign( (std::istreambuf_iterator<char>( ifs )), std::istreambuf_iterator<char>( ) );
-
-		return result;
-	}
-
 	template<typename T>
 	bool in_range( T v, T lower, T upper ) {
 		return lower <= v && v <= upper;
@@ -71,6 +58,29 @@ namespace {
 		}
 		return pos != last;
 	}
+
+	auto read_file( std::string file_name ) {
+		std::ifstream ifs( file_name.c_str( ) );
+		std::string data;
+
+		std::copy_if( std::istreambuf_iterator<char>{ ifs }, std::istreambuf_iterator<char>{ }, std::back_inserter( data ), is_hex_char ); 
+
+		std::vector<uint8_t> result; 
+		for( size_t n=0; n<data.size( )-1; n+=2 ) {
+			char tmp[3] = { data[n], data[n+1], 0 };
+			result.push_back( static_cast<uint8_t>(strtol( tmp, nullptr, 16 )) );
+		}
+	
+		if( result.back( ) == 0 ) {
+			result.pop_back( ); // null terminator
+		}
+		result.pop_back( ); // crc
+		result.pop_back( ); // crc
+
+		return result;
+	}
+
+
 }	// namespace anonymous
 
 int main( int argc, char** argv ) {
@@ -82,26 +92,7 @@ int main( int argc, char** argv ) {
 	
 	auto data = read_file( input_file_str );
 
-	std::vector<uint8_t> v;
-	for( auto it = data.begin( ); it != data.end( ); ++it ) {
-		if( !skip_non_hex( it, data.end( ) ) ) {
-			break;
-		}
-		auto d0 = *it++;
-		if( !skip_non_hex( it, data.end( ) ) ) {
-			break;
-		}
-		auto d1 = *it;
-		char tmp[3] = { d0, d1, 0 };
-		v.push_back( static_cast<uint8_t>(strtol( tmp, nullptr, 16 )) );
-	}
-	
-	if( v.back( ) == 0 ) {
-		v.pop_back( ); // null terminator
-	}
-	v.pop_back( ); // crc
-	v.pop_back( ); // crc
-	auto range = daw::range::make_range( v.data( ), v.data( ) + v.size( ) );
+	auto range = daw::range::make_range( data.data( ), data.data( ) + data.size( ) );
 
 	std::vector<std::unique_ptr<daw::history::history_entry_obj>> entries;
 	size_t pos = 0;
@@ -137,14 +128,14 @@ int main( int argc, char** argv ) {
 			if( item->op_code( ) == 0x0 ) {
 				continue;
 			}
-			std::cout << std::dec << std::dec << pos+1 << "/" << v.size( ) << ": ";
+			std::cout << std::dec << std::dec << pos+1 << "/" << data.size( ) << ": ";
 			if( !reasonible_year( item ) ) {
 				std::cerr << "WARNING: The year does not look correct, outside of plus or minute 2 years from current system year\n";
 			}
 			std::cout << item->encode( );
 			entries.push_back( std::move( item ) );
 		} else {
-			std::cout << std::dec << std::dec << pos+1 << "/" << v.size( ) << ": ";
+			std::cout << std::dec << std::dec << pos+1 << "/" << data.size( ) << ": ";
 			std::cout << "ERROR: data( ";
 			auto err_start = pos;
 			safe_advance( range, 1 );
@@ -154,9 +145,9 @@ int main( int argc, char** argv ) {
 			}
 			auto offset = item ? item->size( ) - 1 : 0;
 			std::cout << (pos-(err_start+offset)) << " ) { ";
-			std::cout << daw::range::make_range( v.data( ) + err_start, v.data( ) + pos - offset ).to_hex_string( ) << " }\n";
+			std::cout << daw::range::make_range( data.data( ) + err_start, data.data( ) + pos - offset ).to_hex_string( ) << " }\n";
 			if( !range.at_end( ) ) {
-				std::cout << std::dec << std::dec << (pos-offset)+1 << "/" << v.size( ) << ": " << item->encode( );
+				std::cout << std::dec << std::dec << (pos-offset)+1 << "/" << data.size( ) << ": " << item->encode( );
 				entries.push_back( std::move( item ) );
 			}
 		}
