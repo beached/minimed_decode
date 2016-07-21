@@ -27,37 +27,45 @@
 #include <cstdlib>
 #include <chrono>
 
-template<typename Data>
-void display( Data const & data ) {
-	for( auto it = data.begin( ); it != data.end( ); ++it ) {
-		if( it != data.begin( ) ) {
-			std::cout << " ";
+namespace {
+	template<typename Data>
+	void display( Data const & data ) {
+		for( auto it = data.begin( ); it != data.end( ); ++it ) {
+			if( it != data.begin( ) ) {
+				std::cout << " ";
+			}
+			std::cout << std::hex << std::setw( 2 ) << std::setfill( '0' ) << static_cast<int>(*it);
 		}
-		std::cout << std::hex << std::setw( 2 ) << std::setfill( '0' ) << static_cast<int>(*it); 
 	}
-}
 
-auto current_year( ) {
-	return boost::posix_time::second_clock::local_time( ).date( ).year( );
-}
+	auto current_year( ) {
+		return boost::posix_time::second_clock::local_time( ).date( ).year( );
+	}
 
-std::string read_file( std::string file_name ) {
-	std::ifstream ifs( file_name.c_str( ) );
-	std::string result;
+	std::string read_file( std::string file_name ) {
+		std::ifstream ifs( file_name.c_str( ) );
+		std::string result;
 
-	ifs.seekg( 0, std::ios::end );
-	result.reserve( static_cast<size_t>(ifs.tellg( )) );
-	ifs.seekg( 0, std::ios::beg );
+		ifs.seekg( 0, std::ios::end );
+		result.reserve( static_cast<size_t>(ifs.tellg( )) );
+		ifs.seekg( 0, std::ios::beg );
 
-	result.assign( (std::istreambuf_iterator<char>( ifs )), std::istreambuf_iterator<char>( ) );
+		result.assign( (std::istreambuf_iterator<char>( ifs )), std::istreambuf_iterator<char>( ) );
 
-	return result;
-}
+		return result;
+	}
+
+	template<typename T>
+	bool in_range( T v, T lower, T upper ) {
+		return lower <= v && v <= upper;
+	}
+
+	bool is_hex_char( char c ) {
+		return in_range( c, '0', '9' ) || in_range( c, 'a', 'f' ) || in_range( c, 'A', 'F' );
+	}
+}	// namespace anonymous
 
 int main( int argc, char** argv ) {
-	auto is_hex_char = []( char c ) { 
-		return ('0' <= c <= '9') || ('a' <= c <= 'f') || ('A' <= c <= 'Z');
-	};
 
 	assert( argc > 2 );
 	daw::history::pump_model_t pump_model( argv[1] );
@@ -73,6 +81,9 @@ int main( int argc, char** argv ) {
 				break;
 			}
 		}
+		if( it == data.end( ) ) {
+			break;
+		}
 		auto d0 = *it;
 		while( it != data.end( ) && !is_hex_char( *it ) ) {
 			if( it != data.end( ) ) {
@@ -81,6 +92,10 @@ int main( int argc, char** argv ) {
 				break;
 			}
 		}
+		if( it == data.end( ) ) {
+			break;
+		}
+
 		auto d1 = *it;
 		char tmp[3] = { d0, d1, 0 };
 		v.push_back( static_cast<uint8_t>(strtol( tmp, nullptr, 16 )) );
