@@ -33,6 +33,15 @@
 
 namespace daw {
 	namespace history {
+		namespace impl {
+			template<typename T>
+			bool read_bit( T const & v, uint8_t bit ) {
+				static_assert( std::is_integral<T>::value && std::is_unsigned<T>::value, "T must be an unsigned integral" );
+				assert( bit < sizeof( T ) * 8 );	
+				return (v & (1 << bit)) != 0;
+			}
+
+		}
 		std::string op_string( uint8_t op_code );
 
 		using data_source_t = daw::range::Range<uint8_t *>;

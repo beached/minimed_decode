@@ -190,7 +190,21 @@ namespace daw {
 			hist_bg_received & operator=( hist_bg_received && ) = default;
 		};	// hist_bg_received
 
-		using hist_meal_marker = history_entry_static<0x40, false, 9>;
+		struct hist_meal_marker: public history_entry_static<0x40, true, 9> {
+			double m_carbohydrates;
+			std::string m_carb_units;
+
+			hist_meal_marker( data_source_t data, pump_model_t pump_model );
+
+			virtual ~hist_meal_marker( );
+			hist_meal_marker( hist_meal_marker const & ) = default;
+			hist_meal_marker( hist_meal_marker && ) = default;
+			hist_meal_marker & operator=( hist_meal_marker const & ) = default;
+			hist_meal_marker & operator=( hist_meal_marker && ) = default;
+		};	// hist_meal_marker
+
+
+
 		using hist_exercise_marker = history_entry_static<0x41, false, 8>;
 		using hist_manual_insulin_marker = history_entry_static<0x42, false, 8>;
 		using hist_other_marker = history_entry_static<0x43, false, 7>;

@@ -58,7 +58,7 @@ namespace daw {
 				case 0x01: return "BolusNormal";
 				case 0x03: return "Prime";
 				case 0x06: return "AlarmPump";
-				case 0x07: return "result_daily_total";
+				case 0x07: return "ResultDailyTotal";
 				case 0x08: return "ChangeBasalProfilePattern";
 				case 0x09: return "ChangeBasalProfile";
 				case 0x0A: return "CalBGForPH";
@@ -81,10 +81,10 @@ namespace daw {
 				case 0x33: return "TempBasal";
 				case 0x34: return "JournalEntryPumpLowReservoir";
 				case 0x35: return "AlarmClockReminder";
-				case 0x3B: return "questionable_3b";
+				case 0x3B: return "Questionable3b";
 				case 0x3C: return "ChangeParadigmLinkID";
 				case 0x3F: return "BGReceivedPumpEvent";
-				case 0x40: return "meal_marker";
+				case 0x40: return "JournalEntryMealMarker";
 				case 0x41: return "JournalEntryExerciseMarker";
 				case 0x42: return "manual_insulin_marker";
 				case 0x43: return "other_marker";
@@ -343,6 +343,38 @@ namespace daw {
 		}
 
 		hist_bg_received::~hist_bg_received( ) { }
+
+		namespace {
+			bool use_carb_exchange( uint8_t d8 ) {
+				//return impl::read_bit( d8, 2 );
+				return ((d8 >> 1) & 0b1) != 0;
+
+			}
+
+			double calc_meal_marker_carb( uint8_t d7, uint8_t d8 ) {
+
+				if( use_carb_exchange( d8 ) ) {
+					return static_cast<double>( d7 );
+				} else {
+					return static_cast<double>(static_cast<uint16_t>(impl::read_bit( d8, 1 ) << 8) | static_cast<uint8_t>( d7 ));
+				}
+
+			}
+
+		}	// namespace anonymous
+		
+		hist_meal_marker::hist_meal_marker( data_source_t data, pump_model_t pump_model ): 
+				history_entry_static<0x40, true, 9>{ std::move( data ), std::move( pump_model ) },
+				m_carbohydrates{ calc_meal_marker_carb( data[7], data[8] ) },
+				m_carb_units{ use_carb_exchange( data[8] ) ? "Exchanges" : "Grams" } {
+
+			link_real( "carbohydrates", m_carbohydrates );
+			link_string( "carbUnits", m_carb_units );
+		}
+
+		hist_meal_marker::~hist_meal_marker( ) { }
+
+
 
 		hist_cal_bg_for_ph::hist_cal_bg_for_ph( data_source_t data, pump_model_t pump_model ):
 				history_entry_static<0x0A, true>{ std::move( data ), std::move( pump_model ) },
