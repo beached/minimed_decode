@@ -76,16 +76,18 @@ namespace {
 int main( int argc, char** argv ) {
 
 	assert( argc > 2 );
-	daw::history::pump_model_t pump_model( argv[1] );
+	auto const & pump_model_str = argv[1];
+	auto const & input_file_str = argv[2];
+	daw::history::pump_model_t pump_model( pump_model_str );
 	
-	auto data = read_file( argv[2] );
+	auto data = read_file( input_file_str );
 
 	std::vector<uint8_t> v;
 	for( auto it = data.begin( ); it != data.end( ); ++it ) {
 		if( !skip_non_hex( it, data.end( ) ) ) {
 			break;
 		}
-		auto d0 = *it;
+		auto d0 = *it++;
 		if( !skip_non_hex( it, data.end( ) ) ) {
 			break;
 		}
@@ -100,8 +102,7 @@ int main( int argc, char** argv ) {
 	v.pop_back( ); // crc
 	v.pop_back( ); // crc
 	auto range = daw::range::make_range( v.data( ), v.data( ) + v.size( ) );
-	std::cout << "data in: " << range.to_hex_string( ) << "\n\n";
-	return 0;
+
 	std::vector<std::unique_ptr<daw::history::history_entry_obj>> entries;
 	size_t pos = 0;
 
