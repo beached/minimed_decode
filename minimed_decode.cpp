@@ -63,6 +63,14 @@ namespace {
 	bool is_hex_char( char c ) {
 		return in_range( c, '0', '9' ) || in_range( c, 'a', 'f' ) || in_range( c, 'A', 'F' );
 	}
+
+	template<typename Iterator>
+	bool skip_non_hex( Iterator pos, Iterator last ) {
+		while( pos != last && !is_hex_char( *pos ) ) {
+			++pos;
+		}
+		return pos != last;
+	}
 }	// namespace anonymous
 
 int main( int argc, char** argv ) {
@@ -74,39 +82,26 @@ int main( int argc, char** argv ) {
 
 	std::vector<uint8_t> v;
 	for( auto it = data.begin( ); it != data.end( ); ++it ) {
-		while( it != data.end( ) && !is_hex_char( *it ) ) {
-			if( it != data.end( ) ) {
-				++it;
-			} else {
-				break;
-			}
-		}
-		if( it == data.end( ) ) {
+		if( !skip_non_hex( it, data.end( ) ) ) {
 			break;
 		}
 		auto d0 = *it;
-		while( it != data.end( ) && !is_hex_char( *it ) ) {
-			if( it != data.end( ) ) {
-				++it;
-			} else {
-				break;
-			}
-		}
-		if( it == data.end( ) ) {
+		if( !skip_non_hex( it, data.end( ) ) ) {
 			break;
 		}
-
 		auto d1 = *it;
 		char tmp[3] = { d0, d1, 0 };
 		v.push_back( static_cast<uint8_t>(strtol( tmp, nullptr, 16 )) );
 	}
+	
 	if( v.back( ) == 0 ) {
 		v.pop_back( ); // null terminator
 	}
 	v.pop_back( ); // crc
 	v.pop_back( ); // crc
 	auto range = daw::range::make_range( v.data( ), v.data( ) + v.size( ) );
-
+	std::cout << "data in: " << range.to_hex_string( ) << "\n\n";
+	return 0;
 	std::vector<std::unique_ptr<daw::history::history_entry_obj>> entries;
 	size_t pos = 0;
 
