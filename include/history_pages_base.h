@@ -38,7 +38,8 @@ namespace daw {
 			bool read_bit( T const & v, uint8_t bit ) {
 				static_assert( std::is_integral<T>::value && std::is_unsigned<T>::value, "T must be an unsigned integral" );
 				assert( bit < sizeof( T ) * 8 );	
-				return (v & (1 << bit)) != 0;
+				auto result = (v & (1 << bit)) != 0;
+				return result;
 			}
 
 		}

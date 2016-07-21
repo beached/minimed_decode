@@ -55,17 +55,34 @@ std::string read_file( std::string file_name ) {
 }
 
 int main( int argc, char** argv ) {
+	auto is_hex_char = []( char c ) { 
+		return ('0' <= c <= '9') || ('a' <= c <= 'f') || ('A' <= c <= 'Z');
+	};
+
 	assert( argc > 2 );
 	daw::history::pump_model_t pump_model( argv[1] );
 	
 	auto data = read_file( argv[2] );
 
 	std::vector<uint8_t> v;
-	for( size_t n = 0; n < data.size( ); n += 2 ) {
-		while( std::isspace( data[n] ) ) {
-			++n;
+	for( auto it = data.begin( ); it != data.end( ); ++it ) {
+		while( it != data.end( ) && !is_hex_char( *it ) ) {
+			if( it != data.end( ) ) {
+				++it;
+			} else {
+				break;
+			}
 		}
-		char tmp[3] = { data[n], data[n + 1], 0 };
+		auto d0 = *it;
+		while( it != data.end( ) && !is_hex_char( *it ) ) {
+			if( it != data.end( ) ) {
+				++it;
+			} else {
+				break;
+			}
+		}
+		auto d1 = *it;
+		char tmp[3] = { d0, d1, 0 };
 		v.push_back( static_cast<uint8_t>(strtol( tmp, nullptr, 16 )) );
 	}
 	if( v.back( ) == 0 ) {

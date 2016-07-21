@@ -346,9 +346,7 @@ namespace daw {
 
 		namespace {
 			bool use_carb_exchange( uint8_t d8 ) {
-				//return impl::read_bit( d8, 2 );
-				return ((d8 >> 1) & 0b1) != 0;
-
+				return impl::read_bit( d8, 2 );
 			}
 
 			double calc_meal_marker_carb( uint8_t d7, uint8_t d8 ) {
