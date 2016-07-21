@@ -302,7 +302,19 @@ namespace daw {
 
 		using hist_change_watch_dog_enable = history_entry_static<0x7C>;
 		using hist_change_other_device_id = history_entry_static<0x7D, false, 37>;
-		using hist_change_watch_dog_marriage_profile = history_entry_static<0x81, false, 12>;
+
+		struct hist_change_watch_dog_marriage_profile: public history_entry_static<0x81, false, 12> {
+			std::string m_other_device_id;
+
+			hist_change_watch_dog_marriage_profile( data_source_t data, pump_model_t pump_model );
+
+			virtual ~hist_change_watch_dog_marriage_profile( );
+			hist_change_watch_dog_marriage_profile( hist_change_watch_dog_marriage_profile const & ) = default;
+			hist_change_watch_dog_marriage_profile( hist_change_watch_dog_marriage_profile && ) = default;
+			hist_change_watch_dog_marriage_profile & operator=( hist_change_watch_dog_marriage_profile const & ) = default;
+			hist_change_watch_dog_marriage_profile & operator=( hist_change_watch_dog_marriage_profile && ) = default;
+		};	// hist_change_watch_dog_marriage_profile
+
 		using hist_delete_other_device_id = history_entry_static<0x82, false, 12>;
 		using hist_change_capture_event_enable = history_entry_static<0x83>;
 	}	// namespace history

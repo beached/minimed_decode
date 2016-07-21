@@ -406,6 +406,14 @@ namespace daw {
 
 		hist_basal_profile_start::~hist_basal_profile_start( ) { }
 
+		hist_change_watch_dog_marriage_profile::hist_change_watch_dog_marriage_profile( data_source_t data, pump_model_t pump_model ):
+				history_entry_static<0x81, false, 12>{ std::move( data ), std::move( pump_model ) },
+				m_other_device_id( data.slice( 8, 12 ).to_hex_string( ) ) {
+
+			link_string( "otherDeviceID", m_other_device_id );
+		}
+
+		hist_change_watch_dog_marriage_profile::~hist_change_watch_dog_marriage_profile( ) { }
 
 
 		hist_change_sensor_setup::hist_change_sensor_setup( data_source_t data, pump_model_t pump_model ):
