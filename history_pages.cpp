@@ -35,7 +35,7 @@ namespace daw {
 	namespace history {
 			namespace {
 			
-			uint32_t seconds_from_gmt( ) {
+			int64_t seconds_from_gmt( ) {
 #ifdef WIN32
 #pragma message ("Warning: GMT Offset set to 0 seconds")
 				return 0;
@@ -47,7 +47,7 @@ namespace daw {
 					
 					return lt.tm_gmtoff;
 				}( );
-				return static_cast<uint32_t>(result);
+				return static_cast<int64_t>(result);
 #endif
 			}
 
@@ -225,16 +225,17 @@ namespace daw {
 			m_timestamp_offset { timestamp_offset },
 			m_timestamp_size { timestamp_size },
 			m_data { data.shrink( data_size ).as_vector( ) },
-			m_timestamp{ parse_timestamp_in_array( data, m_timestamp_offset, m_timestamp_size ) } {
-				
-				link_integral( "op_code", m_op_code );
+			m_timestamp{ parse_timestamp_in_array( data, m_timestamp_offset, m_timestamp_size ) }, 
+			m_timezone_offset_minutes{ static_cast<int32_t>(seconds_from_gmt( )/60) } {
+				link_integral( "_op_code", m_op_code );
 				if( !is_decoded ) {
 					link_integral( "size", m_size );
 					link_integral( "timestamp_offset", m_timestamp_offset );
 					link_integral( "timestamp_size", m_timestamp_size );
 					link_array( "rawData", m_data );
 				}
-				link_timestamp( "timestamp", m_timestamp );
+				link_timestamp( "_timestamp", m_timestamp );
+				link_integral( "_tz_offset_min",  m_timezone_offset_minutes );
 
 			}
 
@@ -271,7 +272,6 @@ namespace daw {
 		hist_result_daily_total::~hist_result_daily_total( ) { }
 		hist_change_sensor_setup::~hist_change_sensor_setup( ) { }
 		hist_change_bolus_wizard_setup::~hist_change_bolus_wizard_setup( ) { }
-		hist_bolus_wizard_estimate::~hist_bolus_wizard_estimate( ) { }
 		
 		namespace {
 			template<typename T, typename Container>
@@ -335,7 +335,7 @@ namespace daw {
 
 		hist_bg_received::hist_bg_received( data_source_t data, pump_model_t pump_model ):
 				history_entry_static<0x3F, true, 10>{ std::move( data ), std::move( pump_model ) },
-				m_amount{ static_cast<uint8_t>((data[1] << 3) | (data[4] >> 5)) },
+				m_amount{ static_cast<uint16_t>(static_cast<uint16_t>(data[1]) << 3 | (static_cast<uint16_t>(data[4]) >> 5)) },
 				m_meter{ data.slice( 7, 10 ).to_hex_string( ) } {
 
 			link_integral( "amount", m_amount );
@@ -377,7 +377,7 @@ namespace daw {
 
 		hist_cal_bg_for_ph::hist_cal_bg_for_ph( data_source_t data, pump_model_t pump_model ):
 				history_entry_static<0x0A, true>{ std::move( data ), std::move( pump_model ) },
-				m_amount{ static_cast<uint16_t>(((data[6] & 0b10000000) << 1) | data[1]) } {
+				m_amount{ static_cast<uint16_t>((static_cast<uint16_t>(impl::read_bit( data[4], 7 )) << 2) | (static_cast<uint16_t>(impl::read_bit( data[6], 7 )) << 1) | data[1]) } {
 
 				link_integral( "amount", m_amount );
 		}
@@ -474,12 +474,15 @@ namespace daw {
 				return static_cast<double>((static_cast<uint16_t>(a & 0b00000111) << static_cast<uint16_t>(8)) | static_cast<uint16_t>(b)) / 10.0;
 			}
 
+			auto bolus_wizard_bg_decoder( data_source_t const & data ) {
+				return static_cast<uint16_t>((static_cast<uint16_t>(data[8] & 0b00000011) << 8) | data[1]);
+			}
 		}
 	
 		hist_bolus_wizard_estimate::hist_bolus_wizard_estimate( data_source_t data, pump_model_t pump_model ):
 				history_entry<0x5B> { std::move( data ), true, static_cast<size_t>(pump_model.larger ? 22 : 20), pump_model },
 				m_carbohydrates{ pump_model.larger ? static_cast<uint16_t>((static_cast<uint16_t>(data[8] & 0b00001100) << static_cast<uint16_t>(6)) | static_cast<uint16_t>(data[7])) : static_cast<uint16_t>(data[7]) },
-				m_blood_glucose{ static_cast<uint16_t>(static_cast<uint16_t>(static_cast<uint16_t>(data[8] & 0b00000011) << 8) | static_cast<uint16_t>(data[1])) },
+				m_blood_glucose{ bolus_wizard_bg_decoder( data ) },
 				m_insulin_food_estimate{ pump_model.larger ? bolus_wizard_insulin_decoder( data[14], data[15] ) : bolus_wizard_insulin_decoder( data[13] ) },
 				m_insulin_correction_estimate{ pump_model.larger ? bolus_wizard_correction_decoder_lrg( data[16], data[13] ) : bolus_wizard_correction_decoder( data[14], data[12] ) } ,
 				m_insulin_bolus_estimate{ pump_model.larger ? bolus_wizard_insulin_decoder( data[19], data[20] ) : bolus_wizard_insulin_decoder( data[18] ) },
@@ -499,6 +502,8 @@ namespace daw {
 			link_integral( "bgTargetHigh", m_bg_target_high );
 			link_real( "carbRatio", m_carbohydrate_ratio );
 		}
+
+		hist_bolus_wizard_estimate::~hist_bolus_wizard_estimate( ) { }
 
 		hist_unabsorbed_insulin::unabsorbed_insulin_record_t::~unabsorbed_insulin_record_t( ) { }
 		hist_unabsorbed_insulin::~hist_unabsorbed_insulin( ) { }

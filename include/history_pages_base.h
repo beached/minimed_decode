@@ -69,7 +69,8 @@ namespace daw {
 			size_t m_timestamp_size;
 			std::vector<uint8_t> m_data;
 			boost::optional<boost::posix_time::ptime> m_timestamp;
-	
+			int32_t m_timezone_offset_minutes;
+
 		protected:
 			history_entry_obj( data_source_t data, bool is_decoded, size_t data_size, pump_model_t, size_t timestamp_offset = 2, size_t timestamp_size = 5 );
 		public:

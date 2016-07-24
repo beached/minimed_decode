@@ -179,7 +179,7 @@ namespace daw {
 		using hist_change_paradigm_linkid = history_entry_static<0x3C, false, 21>;
 
 		struct hist_bg_received: public history_entry_static<0x3F, true, 10> {
-			uint8_t m_amount;
+			uint16_t m_amount;
 			std::string m_meter;
 			hist_bg_received( data_source_t data, pump_model_t pump_model );
 

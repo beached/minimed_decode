@@ -68,6 +68,7 @@ include_directories( ${HEADER_FOLDER} )
 set( HEADER_FILES
 	${HEADER_FOLDER}/history_pages_base.h
 	${HEADER_FOLDER}/history_pages.h
+	${HEADER_FOLDER}/bit.h
 )
 
 set( SOURCE_FILES
@@ -78,4 +79,8 @@ set( SOURCE_FILES
 add_executable( minimed_decode ${HEADER_FILES} ${SOURCE_FILES} )
 add_dependencies( minimed_decode header_libraries_prj parse_json_prj char_rannge_prj )
 target_link_libraries( minimed_decode char_range parse_json ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} )
+
+add_executable( packet_decode ${HEADER_FILES} packet_decode.cpp )
+add_dependencies( packet_decode header_libraries_prj parse_json_prj char_rannge_prj )
+target_link_libraries( packet_decode char_range parse_json ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} )
 

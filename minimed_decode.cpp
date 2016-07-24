@@ -61,11 +61,14 @@ namespace {
 
 	auto read_file( std::string file_name ) {
 		std::ifstream ifs( file_name.c_str( ) );
-		std::string data;
+		std::vector<char> data;
 
 		std::copy_if( std::istreambuf_iterator<char>{ ifs }, std::istreambuf_iterator<char>{ }, std::back_inserter( data ), is_hex_char ); 
-
+		if( data.size( ) % 2 != 0 ) {
+			data.pop_back( );
+		}
 		std::vector<uint8_t> result; 
+		
 		for( size_t n=0; n<data.size( )-1; n+=2 ) {
 			char tmp[3] = { data[n], data[n+1], 0 };
 			result.push_back( static_cast<uint8_t>(strtol( tmp, nullptr, 16 )) );
@@ -126,7 +129,7 @@ int main( int argc, char** argv ) {
 
 		if( item ) {
 			if( item->op_code( ) == 0x0 ) {
-				continue;
+				continue;	// These where the null entries
 			}
 			std::cout << std::dec << std::dec << pos+1 << "/" << data.size( ) << ": ";
 			if( !reasonible_year( item ) ) {
