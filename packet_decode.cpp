@@ -75,12 +75,6 @@ namespace {
 			result.push_back( static_cast<uint8_t>(strtol( tmp, nullptr, 16 )) );
 		}
 	
-		if( result.back( ) == 0 ) {
-			result.pop_back( ); // null terminator
-		}
-		result.pop_back( ); // crc
-		result.pop_back( ); // crc
-
 		return result;
 	}
 
@@ -186,7 +180,10 @@ namespace {
 			return static_cast<uint16_t>(crc << 8) ^ crc16_table[idx];
 		} );
 	}
-
+	bool is_valid_packet_old( uint8_t const * ptr, size_t sz ) {
+		auto const & val = *ptr;
+		return sz >= 4 && (val == 0xA2 || val == 0xA5 || val == 0xA6 || val == 0xA7 || val == 0xA8 || val == 0xAA || val == 0xAB);
+	}
 	bool is_valid_packet( uint8_t const * ptr, size_t sz ) {
 		/*
 			# 0xa2 (162) = mysentry
@@ -241,9 +238,11 @@ int main( int argc, char** argv ) {
 		size_t message_out_sz = message_out.size( );
 	
 		decode_4b6b( data.data( ) + n, data.size( ) - n, message_out.data( ), message_out_sz );
-		if( is_valid_packet( message_out.data( ), message_out_sz ) ) { 
-			auto range = daw::range::make_range( message_out.data( ), message_out.data( ) + message_out_sz );
-			std::cout << range.to_hex_string( ) << std::endl << std::endl;
+		for( size_t m=5; m<message_out_sz; ++m ) {
+			if( is_valid_packet( message_out.data( ), m ) ) { 
+				auto range = daw::range::make_range( message_out.data( ), message_out.data( ) + m );
+				std::cout << range.to_hex_string( ) << std::endl << std::endl;
+			}
 		}
 
 	}
