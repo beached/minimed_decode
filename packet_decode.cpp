@@ -212,7 +212,7 @@ namespace {
 			# 0xaa (170) = sensor
 			# 0xab (171) = sensor2
 		*/
-		if( sz < 5 ) {
+		if( sz < 7 ) {
 			return false;
 		}
 		switch( *ptr ) {
@@ -264,7 +264,7 @@ int main( int argc, char** argv ) {
 					std::cout << range.to_hex_string( ) << std::endl << std::endl;
 				}
 			} else {
-				for( size_t m = 5; m < message_out_sz; ++m ) {
+				for( size_t m = 7; m < message_out_sz; ++m ) {
 					if( is_valid_packet( message_out.data( ), m ) ) {
 						auto range = daw::range::make_range( message_out.data( ), message_out.data( ) + m );
 						std::cout << range.to_hex_string( ) << std::endl << std::endl;
