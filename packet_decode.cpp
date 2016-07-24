@@ -265,12 +265,12 @@ int main( int argc, char** argv ) {
 		auto pk_sz = get_packet_size( message_out[0] );
 		if( pk_sz > -2 && (pk_sz == -1 || static_cast<size_t>(pk_sz) <= message_out_sz) ) {
 			if( pk_sz > 0 ) {
-				if( is_valid_packet( message_out.data( ), static_cast<size_t>(pk_sz) ) ) {
+				if( is_valid_packet( message_out.data( ), static_cast<size_t>(pk_sz+1) ) ) {
 					auto range = daw::range::make_range( message_out.data( ), message_out.data( ) + pk_sz );
 					std::cout << range.to_hex_string( ) << std::endl << std::endl;
 				}
 			} else {
-				for( size_t m = 7; m < message_out_sz; ++m ) {
+				for( size_t m = 7; m <= message_out_sz; ++m ) {
 					if( is_valid_packet( message_out.data( ), m ) ) {
 						auto range = daw::range::make_range( message_out.data( ), message_out.data( ) + m );
 						std::cout << range.to_hex_string( ) << std::endl << std::endl;
@@ -291,12 +291,12 @@ int main( int argc, char** argv ) {
 		auto pk_sz = get_packet_size( message_out[0] );
 		if( pk_sz > -2 && (pk_sz == -1 || static_cast<size_t>(pk_sz) <= message_out_sz) ) {
 			if( pk_sz > 0 ) {
-				if( is_valid_packet( message_out.data( ), static_cast<size_t>(pk_sz) ) ) {
+				if( is_valid_packet( message_out.data( ), static_cast<size_t>(pk_sz+1) ) ) {
 					auto range = daw::range::make_range( message_out.data( ), message_out.data( ) + pk_sz );
 					std::cout << range.to_hex_string( ) << std::endl << std::endl;
 				}
 			} else {
-				for( size_t m = 7; m < message_out_sz; ++m ) {
+				for( size_t m = 7; m <= message_out_sz; ++m ) {
 					if( is_valid_packet( message_out.data( ), m ) ) {
 						auto range = daw::range::make_range( message_out.data( ), message_out.data( ) + m );
 						std::cout << range.to_hex_string( ) << std::endl << std::endl;
