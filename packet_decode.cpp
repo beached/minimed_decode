@@ -148,7 +148,7 @@ namespace {
 				0x66, 0xFD, 0xCB, 0x50, 0xBE, 0x25, 0x13, 0x88, 0x7F, 0xE4, 0xD2, 0x49, 0x95, 0xE, 0x38, 0xA3, 0x54, 0xCF, 0xF9,
 				0x62, 0x8C, 0x17, 0x21, 0xBA, 0x4D, 0xD6, 0xE0, 0x7B };
 
-		return std::accumulate( msg, msg + msg_size, 0, []( uint8_t const & crc, uint8_t const & val ) {
+		return std::accumulate( msg, msg + msg_size, static_cast<uint8_t>(0), []( uint8_t const & crc, uint8_t const & val ) {
 			return crc8_table[crc ^ val];
 		} );
 	}
@@ -175,14 +175,10 @@ namespace {
 				0xEF1F, 0xFF3E, 0xCF5D, 0xDF7C, 0xAF9B, 0xBFBA, 0x8FD9, 0x9FF8, 0x6E17, 0x7E36, 0x4E55, 0x5E74, 0x2E93, 0x3EB2, 
 				0x1EF0 };
 
-		return std::accumulate( msg, msg + msg_size, 0xFFFF, []( uint16_t const & crc, uint8_t const & val ) {
+		return std::accumulate( msg, msg + msg_size, static_cast<uint16_t>(0xFFFF), []( uint16_t const & crc, uint8_t const & val ) {
 			auto const idx = static_cast<uint8_t>(crc >> 8) ^ val;
 			return static_cast<uint16_t>(crc << 8) ^ crc16_table[idx];
 		} );
-	}
-	bool is_valid_packet_old( uint8_t const * ptr, size_t sz ) {
-		auto const & val = *ptr;
-		return sz >= 4 && (val == 0xA2 || val == 0xA5 || val == 0xA6 || val == 0xA7 || val == 0xA8 || val == 0xAA || val == 0xAB);
 	}
 
 	int32_t get_packet_size( uint8_t val ) {
@@ -269,7 +265,7 @@ int main( int argc, char** argv ) {
 		auto pk_sz = get_packet_size( message_out[0] );
 		if( pk_sz > -2 && (pk_sz == -1 || static_cast<size_t>(pk_sz) <= message_out_sz) ) {
 			if( pk_sz > 0 ) {
-				if( is_valid_packet( message_out.data( ), pk_sz ) ) {
+				if( is_valid_packet( message_out.data( ), static_cast<size_t>(pk_sz) ) ) {
 					auto range = daw::range::make_range( message_out.data( ), message_out.data( ) + pk_sz );
 					std::cout << range.to_hex_string( ) << std::endl << std::endl;
 				}
@@ -295,7 +291,7 @@ int main( int argc, char** argv ) {
 		auto pk_sz = get_packet_size( message_out[0] );
 		if( pk_sz > -2 && (pk_sz == -1 || static_cast<size_t>(pk_sz) <= message_out_sz) ) {
 			if( pk_sz > 0 ) {
-				if( is_valid_packet( message_out.data( ), pk_sz ) ) {
+				if( is_valid_packet( message_out.data( ), static_cast<size_t>(pk_sz) ) ) {
 					auto range = daw::range::make_range( message_out.data( ), message_out.data( ) + pk_sz );
 					std::cout << range.to_hex_string( ) << std::endl << std::endl;
 				}
