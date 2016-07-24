@@ -184,6 +184,24 @@ namespace {
 		auto const & val = *ptr;
 		return sz >= 4 && (val == 0xA2 || val == 0xA5 || val == 0xA6 || val == 0xA7 || val == 0xA8 || val == 0xAA || val == 0xAB);
 	}
+
+	int32_t get_packet_size( uint8_t val ) {
+		switch( val ) {
+		case 0xA5:	// Glucose Meter
+			return 7;
+		case 0xAA:	// Sensor
+			return 32;
+		case 0xA2:	// MySentry
+		case 0xA6:	// Paradigm Remote
+		case 0xA7:	// Pump
+		case 0xA8:	// Sensor Test
+		case 0xAB:	// Sensor 2
+			return -1;
+		default:
+			return -2;
+		}
+	}
+
 	bool is_valid_packet( uint8_t const * ptr, size_t sz ) {
 		/*
 			# 0xa2 (162) = mysentry
@@ -238,10 +256,20 @@ int main( int argc, char** argv ) {
 		size_t message_out_sz = message_out.size( );
 	
 		decode_4b6b( data.data( ) + n, data.size( ) - n, message_out.data( ), message_out_sz );
-		for( size_t m=5; m<message_out_sz; ++m ) {
-			if( is_valid_packet( message_out.data( ), m ) ) { 
-				auto range = daw::range::make_range( message_out.data( ), message_out.data( ) + m );
-				std::cout << range.to_hex_string( ) << std::endl << std::endl;
+		auto pk_sz = get_packet_size( message_out[0] );
+		if( pk_sz > -2 && (pk_sz == -1 || static_cast<size_t>(pk_sz) <= message_out_sz) ) {
+			if( pk_sz > 0 ) {
+				if( is_valid_packet( message_out.data( ), pk_sz ) ) {
+					auto range = daw::range::make_range( message_out.data( ), message_out.data( ) + pk_sz );
+					std::cout << range.to_hex_string( ) << std::endl << std::endl;
+				}
+			} else {
+				for( size_t m = 5; m < message_out_sz; ++m ) {
+					if( is_valid_packet( message_out.data( ), m ) ) {
+						auto range = daw::range::make_range( message_out.data( ), message_out.data( ) + m );
+						std::cout << range.to_hex_string( ) << std::endl << std::endl;
+					}
+				}
 			}
 		}
 
