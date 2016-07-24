@@ -60,7 +60,7 @@ namespace daw {
 		}
 
 		value_type pop_front( size_t const bits ) {
-			queue_type const mask_pos = m_size - (bits - 1);
+			queue_type const mask_pos = static_cast<queue_type>(m_size - (bits - 1));
 			auto result = static_cast<value_type>(m_queue >> (mask_pos - 1)); // right shift so that all but the left most 6bits are gone
 			queue_type const mask = ~(get_mask<queue_type>( bits - 1 ) << (m_size - bits));
 			m_queue &= mask;
