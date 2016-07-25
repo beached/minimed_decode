@@ -69,6 +69,7 @@ set( HEADER_FILES
 	${HEADER_FOLDER}/history_pages_base.h
 	${HEADER_FOLDER}/history_pages.h
 	${HEADER_FOLDER}/bit.h
+	${HEADER_FOLDER}/serial_port.h
 )
 
 set( SOURCE_FILES
@@ -84,3 +85,6 @@ add_executable( packet_decode ${HEADER_FILES} packet_decode.cpp )
 add_dependencies( packet_decode header_libraries_prj parse_json_prj char_rannge_prj )
 target_link_libraries( packet_decode char_range parse_json ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} )
 
+add_executable( rfspy ${HEADER_FILES} rfspy.cpp serial_port.cpp )
+add_dependencies( rfspy header_libraries_prj parse_json_prj char_rannge_prj )
+target_link_libraries( rfspy char_range parse_json ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} )

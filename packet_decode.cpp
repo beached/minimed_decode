@@ -208,7 +208,7 @@ namespace {
 			# 0xaa (170) = sensor
 			# 0xab (171) = sensor2
 		*/
-		if( sz < 7 ) {
+		if( sz < 5 ) {
 			return false;
 		}
 		switch( *ptr ) {
@@ -250,6 +250,33 @@ namespace {
 
 
 
+template<typename T, typename U>
+void show_packets( T const & message_out, U message_out_sz ) {
+	bool const dump_all = false;
+	if( dump_all ) {
+		std::cout << "Full decoded - start\n";
+		std::cout << daw::range::make_range( message_out.data( ), message_out.data( ) + message_out_sz ).to_hex_string( ) << "\n\n";
+		std::cout << "Full decoded - end\n\n";
+	}
+	auto pk_sz = get_packet_size( message_out[0] );
+	if( pk_sz > -2 && (pk_sz == -1 || static_cast<size_t>(pk_sz) <= message_out_sz) ) {
+		if( pk_sz > 0 ) {
+			if( is_valid_packet( message_out.data( ), static_cast<size_t>(pk_sz+1) ) ) {
+				std::cout << daw::range::make_range( message_out.data( ), message_out.data( ) + pk_sz ).to_hex_string( ) << "\n\n";
+			}
+		} else {
+			for( size_t m = 5; m <= message_out_sz; ++m ) {
+				if( is_valid_packet( message_out.data( ), m ) ) {
+					std::cout << daw::range::make_range( message_out.data( ), message_out.data( ) + m ).to_hex_string( ) << "\n\n";
+				}
+			}
+		}
+	}
+
+};
+
+
+
 int main( int argc, char** argv ) {
 	assert( argc == 2 );
 	auto const & input_file_str = argv[1];
@@ -262,24 +289,9 @@ int main( int argc, char** argv ) {
 		size_t message_out_sz = message_out.size( );
 	
 		decode_4b6b( data.data( ) + n, data.size( ) - n, message_out.data( ), message_out_sz );
-		auto pk_sz = get_packet_size( message_out[0] );
-		if( pk_sz > -2 && (pk_sz == -1 || static_cast<size_t>(pk_sz) <= message_out_sz) ) {
-			if( pk_sz > 0 ) {
-				if( is_valid_packet( message_out.data( ), static_cast<size_t>(pk_sz+1) ) ) {
-					auto range = daw::range::make_range( message_out.data( ), message_out.data( ) + pk_sz );
-					std::cout << range.to_hex_string( ) << std::endl << std::endl;
-				}
-			} else {
-				for( size_t m = 7; m <= message_out_sz; ++m ) {
-					if( is_valid_packet( message_out.data( ), m ) ) {
-						auto range = daw::range::make_range( message_out.data( ), message_out.data( ) + m );
-						std::cout << range.to_hex_string( ) << std::endl << std::endl;
-					}
-				}
-			}
-		}
-
+		show_packets( message_out, message_out_sz );
 	}
+
 	std::cout << "\nReverse Bits\n";
 	for( auto & v: data ) {
 		v = reverse_bits( v ); 
@@ -288,22 +300,7 @@ int main( int argc, char** argv ) {
 		size_t message_out_sz = message_out.size( );
 	
 		decode_4b6b( data.data( ) + n, data.size( ) - n, message_out.data( ), message_out_sz );
-		auto pk_sz = get_packet_size( message_out[0] );
-		if( pk_sz > -2 && (pk_sz == -1 || static_cast<size_t>(pk_sz) <= message_out_sz) ) {
-			if( pk_sz > 0 ) {
-				if( is_valid_packet( message_out.data( ), static_cast<size_t>(pk_sz+1) ) ) {
-					auto range = daw::range::make_range( message_out.data( ), message_out.data( ) + pk_sz );
-					std::cout << range.to_hex_string( ) << std::endl << std::endl;
-				}
-			} else {
-				for( size_t m = 7; m <= message_out_sz; ++m ) {
-					if( is_valid_packet( message_out.data( ), m ) ) {
-						auto range = daw::range::make_range( message_out.data( ), message_out.data( ) + m );
-						std::cout << range.to_hex_string( ) << std::endl << std::endl;
-					}
-				}
-			}
-		}
+		show_packets( message_out, message_out_sz );
 	}
 
 	return EXIT_SUCCESS;
