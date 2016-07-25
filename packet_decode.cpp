@@ -223,13 +223,16 @@ namespace {
 			case 0xA6:	// Paradigm Remote
 				return ptr[sz-1] == crc8( ptr, sz - 1 );
 			case 0xA7:	// Pump
-				return ptr[sz-1] == crc8( ptr, sz - 1 );
+				if( sz == 7 ) {
+					return ptr[sz-1] == crc8( ptr, sz - 1 );
+				}
+				return false;
 			case 0xA8:	// Sensor Test
-				return ptr[sz-1] == crc8( ptr, sz - 1 );
+				return ptr[sz-1] == crc16( ptr, sz - 2 );
 			case 0xAA:	// Sensor
 				return ptr[sz-2] == crc16( ptr, sz - 2 );
 			case 0xAB:	// Sensor 2
-				return ptr[sz-1] == crc8( ptr, sz - 1 );
+				return ptr[sz-1] == crc16( ptr, sz - 2 );
 			default:
 				return false;
 		}
@@ -251,8 +254,8 @@ namespace {
 
 
 
-template<typename T, typename U>
-void show_packets( T const & message_out, U message_out_sz ) {
+template<typename T, typename U, typename V>
+void show_packets( T const & message_out, U message_out_sz, V const & data ) {
 	bool const dump_all = false;
 	if( dump_all ) {
 		std::cout << "Full decoded - start\n";
@@ -263,11 +266,13 @@ void show_packets( T const & message_out, U message_out_sz ) {
 	if( pk_sz > -2 && (pk_sz == -1 || static_cast<size_t>(pk_sz) <= message_out_sz) ) {
 		if( pk_sz > 0 ) {	// Fixed packet size
 			if( is_valid_packet( message_out.data( ), static_cast<size_t>(pk_sz) ) ) {
+				std::cout << data.to_hex_string( ) << " ==> ";
 				std::cout << daw::range::make_range( message_out.data( ), message_out.data( ) + pk_sz ).to_hex_string( ) << "\n\n";
 			}
 		} else {	// Variable packet size, compute crc
 			for( size_t m = 5; m <= message_out_sz; ++m ) {
 				if( is_valid_packet( message_out.data( ), m ) ) {
+					std::cout << data.to_hex_string( ) << " ==> ";
 					std::cout << daw::range::make_range( message_out.data( ), message_out.data( ) + m ).to_hex_string( ) << "\n\n";
 				}
 			}
@@ -290,7 +295,7 @@ int main( int argc, char** argv ) {
 		size_t message_out_sz = message_out.size( );
 	
 		decode_4b6b( data.data( ) + n, data.size( ) - n, message_out.data( ), message_out_sz );
-		show_packets( message_out, message_out_sz );
+		show_packets( message_out, message_out_sz, daw::range::make_range( data.data( ) + n, data.data( ) + (data.size( ) - n) ) );
 	}
 
 	std::cout << "\nReverse Bits\n";
@@ -301,7 +306,7 @@ int main( int argc, char** argv ) {
 		size_t message_out_sz = message_out.size( );
 	
 		decode_4b6b( data.data( ) + n, data.size( ) - n, message_out.data( ), message_out_sz );
-		show_packets( message_out, message_out_sz );
+		show_packets( message_out, message_out_sz, daw::range::make_range( data.data( ) + n, data.data( ) + (data.size( ) - n) ) );
 	}
 
 	return EXIT_SUCCESS;
