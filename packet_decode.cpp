@@ -261,7 +261,7 @@ void show_packets( T const & message_out, U message_out_sz ) {
 	auto pk_sz = get_packet_size( message_out[0] );
 	if( pk_sz > -2 && (pk_sz == -1 || static_cast<size_t>(pk_sz) <= message_out_sz) ) {
 		if( pk_sz > 0 ) {
-			if( is_valid_packet( message_out.data( ), static_cast<size_t>(pk_sz+1) ) ) {
+			if( is_valid_packet( message_out.data( ), static_cast<size_t>(pk_sz) ) ) {
 				std::cout << daw::range::make_range( message_out.data( ), message_out.data( ) + pk_sz ).to_hex_string( ) << "\n\n";
 			}
 		} else {
