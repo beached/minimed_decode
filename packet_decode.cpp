@@ -209,6 +209,7 @@ namespace {
 			# 0xab (171) = sensor2
 		*/
 		if( sz < 5 ) {
+			// minimum packet AABBBBBBCC - AA - packet type, BB - device id, CC - 8bit crc
 			return false;
 		}
 		switch( *ptr ) {
@@ -260,11 +261,11 @@ void show_packets( T const & message_out, U message_out_sz ) {
 	}
 	auto pk_sz = get_packet_size( message_out[0] );
 	if( pk_sz > -2 && (pk_sz == -1 || static_cast<size_t>(pk_sz) <= message_out_sz) ) {
-		if( pk_sz > 0 ) {
+		if( pk_sz > 0 ) {	// Fixed packet size
 			if( is_valid_packet( message_out.data( ), static_cast<size_t>(pk_sz) ) ) {
 				std::cout << daw::range::make_range( message_out.data( ), message_out.data( ) + pk_sz ).to_hex_string( ) << "\n\n";
 			}
-		} else {
+		} else {	// Variable packet size, compute crc
 			for( size_t m = 5; m <= message_out_sz; ++m ) {
 				if( is_valid_packet( message_out.data( ), m ) ) {
 					std::cout << daw::range::make_range( message_out.data( ), message_out.data( ) + m ).to_hex_string( ) << "\n\n";
