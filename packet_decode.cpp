@@ -254,26 +254,19 @@ namespace {
 
 
 
-template<typename T, typename U, typename V>
-void show_packets( T const & message_out, U message_out_sz, V const & data ) {
-	bool const dump_all = false;
-	if( dump_all ) {
-		std::cout << "Full decoded - start\n";
-		std::cout << daw::range::make_range( message_out.data( ), message_out.data( ) + message_out_sz ).to_hex_string( ) << "\n\n";
-		std::cout << "Full decoded - end\n\n";
-	}
+template<typename T, typename U>
+void show_packets( T const & message_out, U message_out_sz ) {
 	auto pk_sz = get_packet_size( message_out[0] );
 	if( pk_sz > -2 && (pk_sz == -1 || static_cast<size_t>(pk_sz) <= message_out_sz) ) {
 		if( pk_sz > 0 ) {	// Fixed packet size
 			if( is_valid_packet( message_out.data( ), static_cast<size_t>(pk_sz) ) ) {
-				std::cout << data.to_hex_string( ) << " ==> ";
 				std::cout << daw::range::make_range( message_out.data( ), message_out.data( ) + pk_sz ).to_hex_string( ) << "\n\n";
 			}
 		} else {	// Variable packet size, compute crc
 			for( size_t m = 5; m <= message_out_sz; ++m ) {
 				if( is_valid_packet( message_out.data( ), m ) ) {
-					std::cout << data.to_hex_string( ) << " ==> ";
 					std::cout << daw::range::make_range( message_out.data( ), message_out.data( ) + m ).to_hex_string( ) << "\n\n";
+					return;
 				}
 			}
 		}
@@ -295,7 +288,7 @@ int main( int argc, char** argv ) {
 		size_t message_out_sz = message_out.size( );
 	
 		decode_4b6b( data.data( ) + n, data.size( ) - n, message_out.data( ), message_out_sz );
-		show_packets( message_out, message_out_sz, daw::range::make_range( data.data( ) + n, data.data( ) + (data.size( ) - n) ) );
+		show_packets( message_out, message_out_sz );
 	}
 
 	std::cout << "\nReverse Bits\n";
@@ -306,7 +299,7 @@ int main( int argc, char** argv ) {
 		size_t message_out_sz = message_out.size( );
 	
 		decode_4b6b( data.data( ) + n, data.size( ) - n, message_out.data( ), message_out_sz );
-		show_packets( message_out, message_out_sz, daw::range::make_range( data.data( ) + n, data.data( ) + (data.size( ) - n) ) );
+		show_packets( message_out, message_out_sz );
 	}
 
 	return EXIT_SUCCESS;
