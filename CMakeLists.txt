@@ -14,7 +14,7 @@ else( )
 		set( COMPILER_SPECifIC_LIBS, "-lpthread" )
 	endif( )
 
-	if( ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang" )
+	if( ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang" OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "AppleClang" )
 		add_compile_options(-std=c++14 -stdlib=libc++ -Weverything -Wno-c++98-compat -Wfatal-errors -Wno-covered-switch-default -Wno-padded -Wno-exit-time-destructors -Wno-c++98-compat-pedantic -Wno-unused-parameter -Wno-missing-noreturn -Wno-missing-prototypes -Wno-disabled-macro-expansion)		
 	elseif( ${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" )
 		add_compile_options(-std=c++14 -Wall -Wno-deprecated-declarations)
@@ -28,8 +28,6 @@ externalproject_add(
 	SOURCE_DIR "${CMAKE_BINARY_DIR}/deps/header_libraries"
 	INSTALL_DIR "${CMAKE_BINARY_DIR}/install"
 	CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/install
-	PATCH_COMMAND ""
-	TEST_COMMAND ""
  )
 
 externalproject_add( 
@@ -39,19 +37,15 @@ externalproject_add(
 	SOURCE_DIR "${CMAKE_BINARY_DIR}/deps/parse_json"
 	INSTALL_DIR "${CMAKE_BINARY_DIR}/install"
 	CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/install
-	PATCH_COMMAND ""
-	TEST_COMMAND ""
  )
 
 externalproject_add( 
-	char_rannge_prj
+	char_range_prj
 	GIT_REPOSITORY "https://github.com/beached/char_range.git"
 	GIT_TAG "master"
 	SOURCE_DIR "${CMAKE_BINARY_DIR}/deps/char_range"
 	INSTALL_DIR "${CMAKE_BINARY_DIR}/install"
 	CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/install
-	PATCH_COMMAND ""
-	TEST_COMMAND ""
  )
 
 
@@ -66,25 +60,26 @@ set( HEADER_FOLDER "include" )
 include_directories( ${HEADER_FOLDER} )
 
 set( HEADER_FILES
-	${HEADER_FOLDER}/history_pages_base.h
-	${HEADER_FOLDER}/history_pages.h
-	${HEADER_FOLDER}/bit.h
-	${HEADER_FOLDER}/serial_port.h
+    ${HEADER_FOLDER}/history_pages_base.h
+    ${HEADER_FOLDER}/history_pages.h
+    ${HEADER_FOLDER}/bit.h
+#    ${HEADER_FOLDER}/serial_port.h
+    ${HEADER_FOLDER}/ring_buffer.h
+    ${HEADER_FOLDER}/medtronic.h
 )
 
-set( SOURCE_FILES
-	history_pages.cpp
-	minimed_decode.cpp
-)
+#add_dependencies( minimed_decode header_libraries_prj parse_json_prj char_range_prj )
+#target_link_libraries( minimed_decode char_range parse_json ${Boost_LIBRARIES} )
 
-add_executable( minimed_decode ${HEADER_FILES} ${SOURCE_FILES} )
-add_dependencies( minimed_decode header_libraries_prj parse_json_prj char_rannge_prj )
-target_link_libraries( minimed_decode char_range parse_json ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} )
+add_executable( minimed_decode ${HEADER_FILES} minimed_decode.cpp medtronic.cpp history_pages.cpp )
+add_dependencies( minimed_decode header_libraries_prj char_range_prj parse_json_prj )
+target_link_libraries( minimed_decode char_range parse_json ${Boost_LIBRARIES} )
 
-add_executable( packet_decode ${HEADER_FILES} packet_decode.cpp )
-add_dependencies( packet_decode header_libraries_prj parse_json_prj char_rannge_prj )
-target_link_libraries( packet_decode char_range parse_json ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} )
+add_executable( packet_decode ${HEADER_FILES} packet_decode.cpp medtronic.cpp )
+add_dependencies( packet_decode header_libraries_prj parse_json_prj char_range_prj )
+target_link_libraries( packet_decode char_range parse_json ${Boost_LIBRARIES} )
 
 add_executable( rfspy ${HEADER_FILES} rfspy.cpp serial_port.cpp )
-add_dependencies( rfspy header_libraries_prj parse_json_prj char_rannge_prj )
-target_link_libraries( rfspy char_range parse_json ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} )
+add_dependencies( rfspy header_libraries_prj parse_json_prj char_range_prj )
+target_link_libraries( rfspy char_range parse_json ${Boost_LIBRARIES} )
+
