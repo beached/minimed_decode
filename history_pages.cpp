@@ -27,14 +27,45 @@
 #include <daw/daw_range.h>
 #include <sstream>
 #include <tuple>
+#include <string>
 #include <daw/json/daw_json.h>
 #include <daw/json/daw_json_link.h>
 #include "history_pages.h"
 
 namespace daw {
 	namespace history {
+		mask_location::mask_location( size_t idx, std::string msk ):
+				byte_index{ idx },
+				mask{ msk } { }
+
+		namespace {
+			std::bitset<8> to_bitset( uint8_t const & value ) {
+				std::bitset<8> result{ value };
+				return result;
+			}
+
+			unused_bits default_masks( uint8_t const * first, uint8_t const * const last, std::initializer_list<mask_location> other_masks, size_t time_length = 5, size_t time_offset=2 ) {
+				// Default masks opcode and time values
+				static const size_t op_code_offset = 0;
+				unused_bits result{ first, last, { {op_code_offset, "11111111"}, {time_offset + 0, "11111111"}, {time_offset + 1, "11111111"}, {time_offset + 2, "00011111"}, {time_offset + 3, "00011111"}, {time_offset + 4, "0111111"} } };
+				for( auto const & msk : other_masks ) {
+					result.mask_bits( msk );
+				}
+				return result;
+			}
+		}
+
+		std::string to_bitstring( uint8_t const * first, uint8_t const * const last ) {
+			std::stringstream ss;
+			for( ; first != last; ++first ) {
+				ss << to_bitset( *first );
+			}
+			return ss.str( );
+		}
+
+
 			namespace {
-			
+
 			int64_t seconds_from_gmt( ) {
 #ifdef WIN32
 #pragma message ("Warning: GMT Offset set to 0 seconds")
@@ -89,6 +120,7 @@ namespace daw {
 				case 0x42: return "manual_insulin_marker";
 				case 0x43: return "other_marker";
 				case 0x50: return "ChangeSensorSetup2";
+				case 0x53: return "ChangeSensorAlarmsSilenceConfig";
 				case 0x56: return "ChangeSensorRateOfChangeAlertSetup";
 				case 0x57: return "ChangeBolusScrollStepSize";
 				case 0x5A: return "ChangeBolusWizardSetup";
@@ -127,8 +159,8 @@ namespace daw {
 				}
 				uint8_t  second = arry[0] & 0b00111111;
 				uint8_t  minute = arry[1] & 0b00111111;
-				uint8_t  hour = arry[2] & 0b00011111;
-				uint8_t  day = arry[3] & 0b00011111;
+				uint8_t  hour =   arry[2] & 0b00011111;
+				uint8_t  day =    arry[3] & 0b00011111;
 				uint8_t  month = ((arry[0] >> 4) & 0b00001100) + (arry[1] >> 6);
 				uint16_t  year = 2000 + (arry[4] & 0b01111111);
 				if( day < 1 || day > 31 || month < 1 || month > 12 || hour > 24 || minute > 59 || second > 60 ) {
@@ -156,11 +188,11 @@ namespace daw {
 				if( arry.size( ) < 2 ) {
 					return boost::optional<boost::posix_time::ptime>{ };
 				}
-				auto c1 = arry[0];
-				auto c2 = arry[1];
-				uint8_t day = c1 & 0b00011111;
-				uint8_t month = ((c1 & 0b11100000) >> 4) + ((c2 & 0b10000000) >> 7); 
-				uint16_t year = 2000 + (c2 & 0b01111111); 
+				auto const c1 = arry[0];
+				auto const c2 = arry[1];
+				uint8_t const day = c1 & 0b00011111;
+				uint8_t const month = ((c1 & 0b11100000) >> 4) + ((c2 & 0b10000000) >> 7); 
+				uint16_t const year = 2000 + (c2 & 0b01111111); 
 				using namespace boost::posix_time;
 				using namespace boost::gregorian;
 				if( day < 1 || day > 31 || month < 1 || month > 12 ) {
@@ -219,26 +251,57 @@ namespace daw {
 		pump_model_t::~pump_model_t( ) { }
 
 		history_entry_obj::history_entry_obj( data_source_t data, bool is_decoded, size_t data_size, pump_model_t, size_t timestamp_offset, size_t timestamp_size ):
-			JsonLink<history_entry_obj>( op_string( data[0] ) ),
-			m_op_code { data[0] },
-			m_size { data_size }, 
-			m_timestamp_offset { timestamp_offset },
-			m_timestamp_size { timestamp_size },
-			m_data { data.shrink( data_size ).as_vector( ) },
-			m_timestamp{ parse_timestamp_in_array( data, m_timestamp_offset, m_timestamp_size ) }, 
-			m_timezone_offset_minutes{ static_cast<int32_t>(seconds_from_gmt( )/60) } {
-				link_integral( "_op_code", m_op_code );
-				if( !is_decoded ) {
-					link_integral( "size", m_size );
-					link_integral( "timestamp_offset", m_timestamp_offset );
-					link_integral( "timestamp_size", m_timestamp_size );
-					link_array( "rawData", m_data );
-				}
-				link_timestamp( "_timestamp", m_timestamp );
-				link_integral( "_tz_offset_min",  m_timezone_offset_minutes );
+				JsonLink<history_entry_obj>( op_string( data[0] ) ),
+				m_op_code { data[0] },
+				m_size { data_size }, 
+				m_timestamp_offset { timestamp_offset },
+				m_timestamp_size { timestamp_size },
+				m_data { data.shrink( data_size ).as_vector( ) },
+				m_timestamp{ parse_timestamp_in_array( data, m_timestamp_offset, m_timestamp_size ) }, 
+				m_timezone_offset_minutes{ static_cast<int32_t>(seconds_from_gmt( )/60) } {
 
+			link_integral( "_op_code", m_op_code );
+			if( !is_decoded ) {
+				link_integral( "size", m_size );
+				link_integral( "timestamp_offset", m_timestamp_offset );
+				link_integral( "timestamp_size", m_timestamp_size );
+				link_array( "rawData", m_data );
 			}
+			link_timestamp( "_timestamp", m_timestamp );
+			link_integral( "_tz_offset_min",  m_timezone_offset_minutes );
 
+		}
+
+		history_entry_obj::history_entry_obj( history_entry_obj const & other ):
+				JsonLink<history_entry_obj>( op_string( other.m_op_code ) ),
+				m_op_code { other.m_op_code },
+				m_size { other.m_size }, 
+				m_timestamp_offset { other.m_timestamp_offset },
+				m_timestamp_size { other.m_timestamp_size },
+				m_data { other.m_data },
+				m_timestamp{ other.m_timestamp },
+				m_timezone_offset_minutes{ other.m_timezone_offset_minutes } {
+
+			link_integral( "_op_code", m_op_code );
+			if( other.is_linked( "size" ) ) {
+				link_integral( "size", m_size );
+				link_integral( "timestamp_offset", m_timestamp_offset );
+				link_integral( "timestamp_size", m_timestamp_size );
+				link_array( "rawData", m_data );
+			}
+			link_timestamp( "_timestamp", m_timestamp );
+			link_integral( "_tz_offset_min",  m_timezone_offset_minutes );
+
+		}
+
+		history_entry_obj & history_entry_obj::operator=( history_entry_obj const & rhs ) {
+			if( this != &rhs ) {
+				history_entry_obj tmp{ rhs };
+				using std::swap;
+				swap( *this, tmp );
+			}
+			return *this;
+		}
 		history_entry_obj::~history_entry_obj( ) { };
 
 		std::tuple<uint8_t, size_t, size_t, size_t> history_entry_obj::register_event_type( ) const {
@@ -288,6 +351,15 @@ namespace daw {
 			template<typename Container>
 			double decode_insulin_from_bytes( Container const & c, pump_model_t const & pm ) {
 				return static_cast<double>(bigendian_to_native_from_bytes<uint16_t>( c, pm.larger ? 2 : 1 ))/static_cast<double>(pm.strokes_per_unit);
+			}
+		}
+
+		void unused_bits::mask_bits( mask_location const & rng ) {
+			size_t const base = rng.byte_index * 8;
+			for( size_t n=0; n<8; ++n ) {
+				if( rng.mask[n] ) {
+					bits[base + n] = '^';
+				}
 			}
 		}
 
@@ -395,9 +467,11 @@ namespace daw {
 
 		hist_temp_basal_duration::hist_temp_basal_duration( data_source_t data, pump_model_t pump_model ):
 				history_entry_static<0x16, true>{ std::move( data ), std::move( pump_model ) },
-				m_duration_minutes{ static_cast<uint16_t>(static_cast<uint16_t>(data[1]) * 30) } {
+				m_duration_minutes{ static_cast<uint16_t>(static_cast<uint16_t>(data[1]) * 30) },
+				m_unused_bits{ default_masks( data.begin( ), std::next( data.begin( ), 8 ), { {1, "11111111"} } ) } {
 			
 			link_integral( "duration", m_duration_minutes );
+			link_string( "unused_bits", m_unused_bits.bits );
 		}
 
 		hist_temp_basal_duration::~hist_temp_basal_duration( ) { }
@@ -410,16 +484,23 @@ namespace daw {
 		}
 
 		hist_change_time::~hist_change_time( ) { }
+		
+		namespace {
+			double calc_abs_temp_basal( uint16_t b1, uint16_t b7 ) {
+				return static_cast<double>(((b7 & 0b0000000000000111) << 8) | b1)/40.0;
+			}
 
-
+		}
 
 		hist_temp_basal::hist_temp_basal( data_source_t data, pump_model_t pump_model ):
 				history_entry_static<0x33, true, 8>{ std::move( data ), std::move( pump_model ) },
 				m_rate_type{ (data[7] >> 3) == 0 ? "absolute" : "percent" },
-				m_rate{ (data[7] >> 3) == 0 ? static_cast<double>(data[1])/40.0 : static_cast<double>(data[1]) } {
+				m_rate{ (data[7] >> 3) == 0 ? calc_abs_temp_basal( data[1], data[7] ) : static_cast<double>(data[1]) },
+				m_unused_bits{ default_masks( data.begin( ), std::next( data.begin( ), 8 ), { {1, "11111111"}, {7, "00000111"} } ) } {
 				
 			link_string( "rateType", m_rate_type );
 			link_real( "rate", m_rate );
+			link_string( "unused_bits", m_unused_bits.bits );
 		}
 
 		hist_temp_basal::~hist_temp_basal( ) { }
@@ -452,6 +533,62 @@ namespace daw {
 
 		hist_change_bolus_wizard_setup::hist_change_bolus_wizard_setup( data_source_t data, pump_model_t pump_model ):
 			history_entry<0x5A>( std::move( data ), false, pump_model.larger ? 144 : 124, std::move( pump_model ) ) { }
+
+		namespace {
+			constexpr history_change_sensor_alarms_silence_config::silence_type_t to_silence_type_t( uint8_t const c ) {
+				switch( c ) {
+					case 0: return history_change_sensor_alarms_silence_config::silence_type_t::off;
+					case 1: return history_change_sensor_alarms_silence_config::silence_type_t::lo;
+					case 2: return history_change_sensor_alarms_silence_config::silence_type_t::hi;
+					case 4: return history_change_sensor_alarms_silence_config::silence_type_t::lo_hi;
+					case 8: return history_change_sensor_alarms_silence_config::silence_type_t::all;
+					default:
+						 return history_change_sensor_alarms_silence_config::silence_type_t::unknown;
+				}
+			}
+			
+			uint16_t make_duration( uint16_t b4, uint16_t b7 ) {
+				return ((b4 & 0b0000000011100000) << 3) | b7;
+			}
+		}
+		history_change_sensor_alarms_silence_config::history_change_sensor_alarms_silence_config( data_source_t data, pump_model_t pump_model ):
+				history_entry_static<0x53, false, 8>{ std::move( data ), std::move( pump_model ) },
+				m_silence_type{ to_silence_type_t( data[1] ) },
+				m_duration_minutes{ make_duration( data[4], data[7] ) },
+				m_unused_bits{ default_masks( data.begin( ), std::next( data.begin( ), 9 ), { {1, "11110000"}, {4, "00011111" }, {7, "11111111"} } ) } {
+					
+				
+				link_streamable( "silence_type", m_silence_type );
+				link_integral( "duration_minutes", m_duration_minutes );
+				link_string( "unused_bits", m_unused_bits.bits );
+			}
+
+		history_change_sensor_alarms_silence_config::~history_change_sensor_alarms_silence_config( ) { }
+
+		std::ostream & operator<<( std::ostream & os, history_change_sensor_alarms_silence_config::silence_type_t const & s ) {
+			using namespace std::literals::string_literals;
+			static std::array<std::string, 10> const results = { "off"s, "hi"s, "lo"s, "unknown3"s, 
+																"lo_hi"s, "unknown5"s, "unknown6"s, "unknown7"s, 
+																"all"s, "unknown9"s };
+			os << results[static_cast<size_t>( s )];
+			return os;
+		}
+
+		std::istream & operator>>( std::istream & is, history_change_sensor_alarms_silence_config::silence_type_t & s ) {
+			using namespace std::literals::string_literals;
+			static std::unordered_map<std::string, history_change_sensor_alarms_silence_config::silence_type_t> const results = { 
+				{ "off"s, history_change_sensor_alarms_silence_config::silence_type_t::off },
+				{ "hi"s, history_change_sensor_alarms_silence_config::silence_type_t::lo },
+				{ "lo"s, history_change_sensor_alarms_silence_config::silence_type_t::hi },
+				{ "lo_hi"s, history_change_sensor_alarms_silence_config::silence_type_t::lo_hi },
+				{ "all"s, history_change_sensor_alarms_silence_config::silence_type_t::all },
+				{ "unknown"s, history_change_sensor_alarms_silence_config::silence_type_t::unknown } 
+			};
+			std::string tmp;
+			is >> tmp;
+			s = results.at( tmp );
+			return is;
+		}
 
 		namespace {
 			auto bolus_wizard_insulin_decoder( uint8_t a, uint8_t b ) {
@@ -516,6 +653,24 @@ namespace daw {
 			link_real( "amount", m_amount );
 			link_integral( "age", m_age );
 		}	
+		
+		hist_unabsorbed_insulin::unabsorbed_insulin_record_t::unabsorbed_insulin_record_t( hist_unabsorbed_insulin::unabsorbed_insulin_record_t const & other ):
+				daw::json::JsonLink<hist_unabsorbed_insulin::unabsorbed_insulin_record_t>{ },
+				m_amount{ other.m_amount },
+				m_age{ other.m_age } {
+
+			link_real( "amount", m_amount );
+			link_integral( "age", m_age );
+		}	
+
+		hist_unabsorbed_insulin::unabsorbed_insulin_record_t & hist_unabsorbed_insulin::unabsorbed_insulin_record_t::unabsorbed_insulin_record_t::operator=( hist_unabsorbed_insulin::unabsorbed_insulin_record_t const & rhs ) {
+			if( this != &rhs ) {
+				unabsorbed_insulin_record_t tmp{ rhs };
+				using std::swap;
+				swap( *this, tmp );
+			}
+			return *this;
+		}
 
 		hist_unabsorbed_insulin::hist_unabsorbed_insulin( data_source_t data, pump_model_t pump_model ):
 			history_entry<0x5C>{ std::move( data ), true, max( data[1], 2 ), std::move( pump_model ), 1, 0 },
@@ -590,6 +745,7 @@ namespace daw {
 							case 0x42: return new hist_manual_insulin_marker( std::forward<Args>( args )... );
 							case 0x43: return new hist_other_marker( std::forward<Args>( args )... );
 							case 0x50: return new hist_change_sensor_setup( std::forward<Args>( args )... );
+							case 0x53: return new history_change_sensor_alarms_silence_config( std::forward<Args>( args )... );
 							case 0x56: return new hist_change_sensor_rate_of_change_alert_setup( std::forward<Args>( args )... );
 							case 0x57: return new hist_change_bolus_scroll_step_size( std::forward<Args>( args )... );
 							case 0x5A: return new hist_change_bolus_wizard_setup( std::forward<Args>( args )... );

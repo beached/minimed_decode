@@ -133,7 +133,7 @@ int main( int argc, char** argv ) {
 			}
 			std::cout << std::dec << std::dec << pos+1 << "/" << data.size( ) << ": ";
 			if( !reasonible_year( item ) ) {
-				std::cerr << "WARNING: The year does not look correct, outside of plus or minute 2 years from current system year\n";
+				std::cerr << "WARNING: The year does not look correct, outside of plus or minus 2 years from current system year\n";
 			}
 			std::cout << item->encode( );
 			entries.push_back( std::move( item ) );

@@ -31,7 +31,27 @@
 namespace daw {
 	namespace history {
 		// Known History Entries in order of op_code
+		std::string to_bitstring( uint8_t const * first, uint8_t const * const last );
+		struct mask_location {
+			size_t byte_index;
+			std::bitset<8> mask;
 
+			mask_location( size_t idx, std::string msk );
+		};
+
+		struct unused_bits {
+			std::string bits;
+			template<typename Iterator>
+			unused_bits( Iterator first, Iterator last, std::initializer_list<mask_location> used_bits ):
+					bits{ to_bitstring( first, last ) } {
+
+				for( auto const & p: used_bits ) {
+					mask_bits( p );
+				}
+			}
+
+			void mask_bits( mask_location const & rng );
+		};	// unused_bit
 		using hist_skip = history_entry_static<0x00, true, 1, 0, 0>;
 
 		enum class bolus_type_t: uint8_t {
@@ -125,6 +145,7 @@ namespace daw {
 
 		struct hist_temp_basal_duration: public history_entry_static<0x16, true> {
 			uint16_t m_duration_minutes;
+			unused_bits m_unused_bits;
 
 			hist_temp_basal_duration( data_source_t data, pump_model_t pump_model );
 
@@ -163,6 +184,7 @@ namespace daw {
 		struct hist_temp_basal: public history_entry_static<0x33, true, 8> {
 			std::string m_rate_type;
 			double m_rate;
+			unused_bits m_unused_bits;
 			
 			hist_temp_basal( data_source_t data, pump_model_t pump_model );
 
@@ -203,18 +225,37 @@ namespace daw {
 			hist_meal_marker & operator=( hist_meal_marker && ) = default;
 		};	// hist_meal_marker
 
-
-
 		using hist_exercise_marker = history_entry_static<0x41, false, 8>;
 		using hist_manual_insulin_marker = history_entry_static<0x42, false, 8>;
 		using hist_other_marker = history_entry_static<0x43, false, 7>;
-		using hist_change_sensor_rate_of_change_alert_setup = history_entry_static<0x56, false, 12>;
-		using hist_change_bolus_scroll_step_size = history_entry_static<0x57>;
 
 		struct hist_change_sensor_setup: public history_entry<0x50> {
 			hist_change_sensor_setup( data_source_t data, pump_model_t pump_model );
 			virtual ~hist_change_sensor_setup( );
 		};	// hist_change_sensor_setup
+
+		struct history_change_sensor_alarms_silence_config: public history_entry_static<0x53, false, 8> {
+			enum class silence_type_t: uint8_t { off=0, hi=1, lo=2, lo_hi=4, all=8, unknown=9 };
+			
+			silence_type_t m_silence_type;
+			uint16_t m_duration_minutes;
+			unused_bits m_unused_bits;
+
+			history_change_sensor_alarms_silence_config( data_source_t data, pump_model_t pump_model );
+			virtual ~history_change_sensor_alarms_silence_config( );
+
+			history_change_sensor_alarms_silence_config( history_change_sensor_alarms_silence_config const & ) = default;
+			history_change_sensor_alarms_silence_config( history_change_sensor_alarms_silence_config && ) = default;
+			history_change_sensor_alarms_silence_config & operator=( history_change_sensor_alarms_silence_config const & ) = default;
+			history_change_sensor_alarms_silence_config & operator=( history_change_sensor_alarms_silence_config && ) = default;
+
+		};	// history_change_sensor_alarms_silence_config 
+		
+		std::ostream & operator<<( std::ostream & os, history_change_sensor_alarms_silence_config::silence_type_t const & s );
+		std::istream & operator>>( std::istream & is, history_change_sensor_alarms_silence_config::silence_type_t & s );
+
+		using hist_change_sensor_rate_of_change_alert_setup = history_entry_static<0x56, false, 12>;
+		using hist_change_bolus_scroll_step_size = history_entry_static<0x57>;
 
 		struct hist_change_bolus_wizard_setup: public history_entry<0x5A> {
 			hist_change_bolus_wizard_setup( data_source_t data, pump_model_t pump_model );
@@ -243,9 +284,9 @@ namespace daw {
 				uint32_t m_age;
 				virtual ~unabsorbed_insulin_record_t( );
 				unabsorbed_insulin_record_t( double amount = 0.0, uint32_t age = 0 );
-				unabsorbed_insulin_record_t( unabsorbed_insulin_record_t const & ) = default;
-				unabsorbed_insulin_record_t( unabsorbed_insulin_record_t && ) = default;
-				unabsorbed_insulin_record_t & operator=( unabsorbed_insulin_record_t const & ) = default;
+				unabsorbed_insulin_record_t( unabsorbed_insulin_record_t const & other );
+				unabsorbed_insulin_record_t & operator=( unabsorbed_insulin_record_t const & rhs );
+				unabsorbed_insulin_record_t( unabsorbed_insulin_record_t && )= default;
 				unabsorbed_insulin_record_t & operator=( unabsorbed_insulin_record_t && ) = default;
 			};
 			std::vector<unabsorbed_insulin_record_t> m_records;

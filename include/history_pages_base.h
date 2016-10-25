@@ -84,9 +84,9 @@ namespace daw {
 			std::tuple<uint8_t, size_t, size_t, size_t> register_event_type( ) const;
 
 			history_entry_obj( ) = delete;
-			history_entry_obj( history_entry_obj const & ) = default;
+			history_entry_obj( history_entry_obj const & other );
+			history_entry_obj & operator=( history_entry_obj const & rhs );
 			history_entry_obj( history_entry_obj && ) = default;
-			history_entry_obj & operator=( history_entry_obj const & ) = default;
 			history_entry_obj & operator=( history_entry_obj && ) = default;
 		};	// history_entry_obj
 
