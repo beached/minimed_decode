@@ -69,11 +69,13 @@ namespace daw {
 
 			hist_bolus_normal( data_source_t data, pump_model_t pump_model );
 			virtual ~hist_bolus_normal( );
-			hist_bolus_normal( hist_bolus_normal const & ) = default;
-			hist_bolus_normal( hist_bolus_normal && ) = default;
-			hist_bolus_normal & operator=( hist_bolus_normal const & ) = default;
-			hist_bolus_normal & operator=( hist_bolus_normal && ) = default;
 
+			hist_bolus_normal( hist_bolus_normal const & other );
+			hist_bolus_normal( hist_bolus_normal && other );
+			hist_bolus_normal & operator=( hist_bolus_normal const & rhs );
+			hist_bolus_normal & operator=( hist_bolus_normal && rhs );
+		private:
+			void set_links( );
 		};	// hist_bolus_normal
 
 		struct hist_prime: public history_entry_static<0x03, true, 10, 5> {
@@ -279,6 +281,7 @@ namespace daw {
 		};	// hist_bolus_wizard_estimate
 
 		struct hist_unabsorbed_insulin: public history_entry<0x5C> {
+			
 			struct unabsorbed_insulin_record_t: public daw::json::JsonLink<unabsorbed_insulin_record_t>  {
 				double m_amount;
 				uint32_t m_age;
@@ -286,16 +289,21 @@ namespace daw {
 				unabsorbed_insulin_record_t( double amount = 0.0, uint32_t age = 0 );
 				unabsorbed_insulin_record_t( unabsorbed_insulin_record_t const & other );
 				unabsorbed_insulin_record_t & operator=( unabsorbed_insulin_record_t const & rhs );
-				unabsorbed_insulin_record_t( unabsorbed_insulin_record_t && )= default;
-				unabsorbed_insulin_record_t & operator=( unabsorbed_insulin_record_t && ) = default;
+				unabsorbed_insulin_record_t( unabsorbed_insulin_record_t && other );
+				unabsorbed_insulin_record_t & operator=( unabsorbed_insulin_record_t && rhs );
+			private:
+				void set_links( );
 			};
+
 			std::vector<unabsorbed_insulin_record_t> m_records;
 			hist_unabsorbed_insulin( data_source_t data, pump_model_t pump_model );
 			virtual ~hist_unabsorbed_insulin( );
-			hist_unabsorbed_insulin( hist_unabsorbed_insulin const & ) = default;
-			hist_unabsorbed_insulin( hist_unabsorbed_insulin && ) = default;
-			hist_unabsorbed_insulin & operator=( hist_unabsorbed_insulin const & ) = default;
-			hist_unabsorbed_insulin & operator=( hist_unabsorbed_insulin && ) = default;
+			hist_unabsorbed_insulin( hist_unabsorbed_insulin const & other );
+			hist_unabsorbed_insulin( hist_unabsorbed_insulin && other );
+			hist_unabsorbed_insulin & operator=( hist_unabsorbed_insulin const & rhs );
+			hist_unabsorbed_insulin & operator=( hist_unabsorbed_insulin && rhs );
+		private:
+			void set_links( );
 		};	// hist_unabsorbed_insulin
 
 		using hist_change_variable_bolus = history_entry_static<0x5E>;

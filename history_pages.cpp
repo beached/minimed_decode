@@ -251,7 +251,7 @@ namespace daw {
 		pump_model_t::~pump_model_t( ) { }
 
 		history_entry_obj::history_entry_obj( data_source_t data, bool is_decoded, size_t data_size, pump_model_t, size_t timestamp_offset, size_t timestamp_size ):
-				JsonLink<history_entry_obj>( op_string( data[0] ) ),
+				daw::json::JsonLink<history_entry_obj>( op_string( data[0] ) ),
 				m_op_code { data[0] },
 				m_size { data_size }, 
 				m_timestamp_offset { timestamp_offset },
@@ -262,6 +262,28 @@ namespace daw {
 
 			link_integral( "_op_code", m_op_code );
 			if( !is_decoded ) {
+				link_integral( "size", m_size );
+				link_integral( "timestamp_offset", m_timestamp_offset );
+				link_integral( "timestamp_size", m_timestamp_size );
+				link_array( "rawData", m_data );
+			}
+			link_timestamp( "_timestamp", m_timestamp );
+			link_integral( "_tz_offset_min",  m_timezone_offset_minutes );
+
+		}
+
+		history_entry_obj::history_entry_obj( history_entry_obj && other ):
+				daw::json::JsonLink<history_entry_obj>( op_string( other.m_op_code ) ),
+				m_op_code{ std::move( other.m_op_code ) },
+				m_size{ std::move( other.m_size ) }, 
+				m_timestamp_offset{ std::move( other.m_timestamp_offset ) },
+				m_timestamp_size{ std::move( other.m_timestamp_size ) },
+				m_data { std::move( other.m_data ) },
+				m_timestamp{ std::move( other.m_timestamp ) },
+				m_timezone_offset_minutes{ std::move( other.m_timezone_offset_minutes ) } {
+
+			link_integral( "_op_code", m_op_code );
+			if( other.is_linked( "size" ) ) {
 				link_integral( "size", m_size );
 				link_integral( "timestamp_offset", m_timestamp_offset );
 				link_integral( "timestamp_size", m_timestamp_size );
@@ -296,8 +318,17 @@ namespace daw {
 
 		history_entry_obj & history_entry_obj::operator=( history_entry_obj const & rhs ) {
 			if( this != &rhs ) {
-				history_entry_obj tmp{ rhs };
 				using std::swap;
+				history_entry_obj tmp{ rhs };
+				swap( *this, tmp );
+			}
+			return *this;
+		}
+
+		history_entry_obj & history_entry_obj::operator=( history_entry_obj && rhs ) {
+			if( this != &rhs ) {
+				using std::swap;
+				history_entry_obj tmp{ std::move( rhs ) };
 				swap( *this, tmp );
 			}
 			return *this;
@@ -363,6 +394,13 @@ namespace daw {
 			}
 		}
 
+		void hist_bolus_normal::set_links( ) {
+			this->link_real( "amount", m_amount );
+			this->link_real( "programmed", m_programmed );
+			this->link_real( "unabsorbed", m_unabsorbed_insulin_total );
+			this->link_integral( "duration", m_duration );
+		}
+
 		hist_bolus_normal::hist_bolus_normal( data_source_t data, pump_model_t pump_model ):
 				history_entry<0x01>( std::move( data ), false, pump_model.larger ? 13 : 9, std::move( pump_model ), pump_model.larger ? 8 : 4 ),
 				m_amount{ decode_insulin_from_bytes( data.slice( 3 ), pump_model ) }, 
@@ -370,10 +408,46 @@ namespace daw {
 				m_unabsorbed_insulin_total{ pump_model.larger ? decode_insulin_from_bytes( data.slice( 5 ), pump_model ) : 0 },
 				m_duration( static_cast<uint16_t>(data[pump_model.larger ? 7 : 3])*30 ) {
 
-			link_real( "amount", m_amount );
-			link_real( "programmed", m_programmed );
-			link_real( "unabsorbed", m_unabsorbed_insulin_total );
-			link_integral( "duration", m_duration );
+			set_links( );
+		}
+
+		hist_bolus_normal::hist_bolus_normal( hist_bolus_normal const & other ):
+				history_entry<0x01>{ other },
+				m_amount{ other.m_amount },
+				m_programmed{ other.m_programmed },
+				m_unabsorbed_insulin_total{ other.m_unabsorbed_insulin_total },
+				m_duration{ other.m_duration } {
+
+			set_links( );
+		}
+
+		hist_bolus_normal::hist_bolus_normal( hist_bolus_normal && other ):
+				history_entry<0x01>{ std::move( other ) },
+				m_amount{ std::move( other.m_amount ) },
+				m_programmed{ std::move( other.m_programmed ) },
+				m_unabsorbed_insulin_total{ std::move( other.m_unabsorbed_insulin_total ) },
+				m_duration{ std::move( other.m_duration ) } {
+
+			set_links( );
+		}
+
+
+		hist_bolus_normal & hist_bolus_normal::operator=( hist_bolus_normal const & rhs ) {
+			if( this != &rhs ) {
+				using std::swap;
+				hist_bolus_normal tmp{ rhs };
+				swap( *this, tmp );
+			}
+			return *this;
+		}
+
+		hist_bolus_normal & hist_bolus_normal::operator=( hist_bolus_normal && rhs ) {
+			if( this != &rhs ) {
+				using std::swap;
+				hist_bolus_normal tmp{ std::move( rhs ) };
+				swap( *this, tmp );
+			}
+			return *this;
 		}
 
 		hist_bolus_normal::~hist_bolus_normal( ) { }
@@ -642,31 +716,53 @@ namespace daw {
 
 		hist_bolus_wizard_estimate::~hist_bolus_wizard_estimate( ) { }
 
+
 		hist_unabsorbed_insulin::unabsorbed_insulin_record_t::~unabsorbed_insulin_record_t( ) { }
+
 		hist_unabsorbed_insulin::~hist_unabsorbed_insulin( ) { }
-
-		hist_unabsorbed_insulin::unabsorbed_insulin_record_t::unabsorbed_insulin_record_t( double amount, uint32_t age ):
-			daw::json::JsonLink<hist_unabsorbed_insulin::unabsorbed_insulin_record_t>{ },
-			m_amount{ amount },
-			m_age{ age } {
-
+		
+		void hist_unabsorbed_insulin::unabsorbed_insulin_record_t::set_links( ) {
 			link_real( "amount", m_amount );
 			link_integral( "age", m_age );
+		}
+
+		hist_unabsorbed_insulin::unabsorbed_insulin_record_t::unabsorbed_insulin_record_t( double amount, uint32_t age ):
+				daw::json::JsonLink<hist_unabsorbed_insulin::unabsorbed_insulin_record_t>{ },
+				m_amount{ amount },
+				m_age{ age } {
+
+			set_links( );
 		}	
-		
+
 		hist_unabsorbed_insulin::unabsorbed_insulin_record_t::unabsorbed_insulin_record_t( hist_unabsorbed_insulin::unabsorbed_insulin_record_t const & other ):
 				daw::json::JsonLink<hist_unabsorbed_insulin::unabsorbed_insulin_record_t>{ },
 				m_amount{ other.m_amount },
 				m_age{ other.m_age } {
 
-			link_real( "amount", m_amount );
-			link_integral( "age", m_age );
+			set_links( );
+		}	
+	
+		hist_unabsorbed_insulin::unabsorbed_insulin_record_t::unabsorbed_insulin_record_t( hist_unabsorbed_insulin::unabsorbed_insulin_record_t && other ):
+				daw::json::JsonLink<hist_unabsorbed_insulin::unabsorbed_insulin_record_t>{ },
+				m_amount{ std::move( other.m_amount ) },
+				m_age{ std::move( other.m_age ) } {
+
+			set_links( );
 		}	
 
 		hist_unabsorbed_insulin::unabsorbed_insulin_record_t & hist_unabsorbed_insulin::unabsorbed_insulin_record_t::unabsorbed_insulin_record_t::operator=( hist_unabsorbed_insulin::unabsorbed_insulin_record_t const & rhs ) {
 			if( this != &rhs ) {
-				unabsorbed_insulin_record_t tmp{ rhs };
 				using std::swap;
+				unabsorbed_insulin_record_t tmp{ rhs };
+				swap( *this, tmp );
+			}
+			return *this;
+		}
+
+		hist_unabsorbed_insulin::unabsorbed_insulin_record_t & hist_unabsorbed_insulin::unabsorbed_insulin_record_t::unabsorbed_insulin_record_t::operator=( hist_unabsorbed_insulin::unabsorbed_insulin_record_t && rhs ) {
+			if( this != &rhs ) {
+				using std::swap;
+				unabsorbed_insulin_record_t tmp{ std::move( rhs ) };
 				swap( *this, tmp );
 			}
 			return *this;

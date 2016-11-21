@@ -86,8 +86,8 @@ namespace daw {
 			history_entry_obj( ) = delete;
 			history_entry_obj( history_entry_obj const & other );
 			history_entry_obj & operator=( history_entry_obj const & rhs );
-			history_entry_obj( history_entry_obj && ) = default;
-			history_entry_obj & operator=( history_entry_obj && ) = default;
+			history_entry_obj( history_entry_obj && other );
+			history_entry_obj & operator=( history_entry_obj && rhs );
 		};	// history_entry_obj
 
 		template<uint8_t child_op_code>

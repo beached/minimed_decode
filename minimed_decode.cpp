@@ -124,6 +124,8 @@ int main( int argc, char** argv ) {
 		return true;	// Not all items have timestamps
 	};
 
+	std::cout << "{ \"values\": [\n";
+	bool first = true;
 	while( !range.at_end( ) ) {
 		auto item = daw::history::create_history_entry( range, pump_model, pos );
 
@@ -131,15 +133,20 @@ int main( int argc, char** argv ) {
 			if( item->op_code( ) == 0x0 ) {
 				continue;	// These where the null entries
 			}
-			std::cout << std::dec << std::dec << pos+1 << "/" << data.size( ) << ": ";
 			if( !reasonible_year( item ) ) {
 				std::cerr << "WARNING: The year does not look correct, outside of plus or minus 2 years from current system year\n";
 			}
-			std::cout << item->encode( );
+			if( first ) {
+				first = false;
+			} else {
+				std::cout << ",";
+			}
+			std::cout << "{ \"loc\": \"" << std::dec << std::dec << pos+1 << "/" << data.size( ) << "\", ";
+			std::cout << item->to_string( ) << "}";
 			entries.push_back( std::move( item ) );
 		} else {
-			std::cout << std::dec << std::dec << pos+1 << "/" << data.size( ) << ": ";
-			std::cout << "ERROR: data( ";
+			std::cerr << std::dec << std::dec << pos+1 << "/" << data.size( ) << ": ";
+			std::cerr << "ERROR: data( ";
 			auto err_start = pos;
 			safe_advance( range, 1 );
 			while( !range.at_end( ) && (range[0] == 0 || !(item = daw::history::create_history_entry( range, pump_model, pos )) || !good_item( item ) )) {
@@ -147,15 +154,21 @@ int main( int argc, char** argv ) {
 				++pos;
 			}
 			auto offset = item ? item->size( ) - 1 : 0;
-			std::cout << (pos-(err_start+offset)) << " ) { ";
-			std::cout << daw::range::make_range( data.data( ) + err_start, data.data( ) + pos - offset ).to_hex_string( ) << " }\n";
+			std::cerr << (pos-(err_start+offset)) << " ) { ";
+			std::cerr << daw::range::make_range( data.data( ) + err_start, data.data( ) + pos - offset ).to_hex_string( ) << " }\n";
 			if( !range.at_end( ) ) {
-				std::cout << std::dec << std::dec << (pos-offset)+1 << "/" << data.size( ) << ": " << item->encode( );
+				if( first ) {
+					first = false;
+				} else {
+					std::cout << ",";
+				}
+				std::cout << "{ \"loc\": \"" << std::dec << std::dec << (pos-offset)+1 << "/" << data.size( ) << "\", " << item->to_string( ) << "}";
 				entries.push_back( std::move( item ) );
 			}
 		}
-		std::cout << "\n\n";
+		std::cout << "\n";
 	}
+	std::cout << "]}\n\n";
 	return EXIT_SUCCESS;
 }
 
