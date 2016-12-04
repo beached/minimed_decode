@@ -566,17 +566,6 @@ namespace daw {
 
 		hist_temp_basal_duration::~hist_temp_basal_duration( ) { }
 
-		/*
-		hist_change_time::hist_change_time( data_source_t data, pump_model_t pump_model ):
-				history_entry_static<0x17, false, 14, 9>{ std::move( data ), std::move( pump_model ) },
-				m_old_timestamp{ *parse_timestamp( data.slice( 2 ) ) }
-				{
-
-			link_timestamp( "oldTimeStamp", m_old_timestamp );
-		}
-
-		hist_change_time::~hist_change_time( ) { }
-		*/	
 		namespace {
 			double calc_abs_temp_basal( uint16_t b1, uint16_t b7 ) {
 				return static_cast<double>(((b7 & 0b0000000000000111) << 8) | b1)/40.0;

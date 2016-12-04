@@ -158,20 +158,6 @@ namespace daw {
 			hist_temp_basal_duration & operator=( hist_temp_basal_duration && ) = default;
 		};	// hist_temp_basal_duration
 
-		/*
-		struct hist_change_time: public history_entry_static<0x17, false, 14, 9> {
-			boost::posix_time::ptime m_old_timestamp;
-
-			hist_change_time( data_source_t data, pump_model_t pump_model );
-
-			virtual ~hist_change_time( );
-			hist_change_time( hist_change_time const & ) = default;
-			hist_change_time( hist_change_time && ) = default;
-			hist_change_time & operator=( hist_change_time const & ) = default;
-			hist_change_time & operator=( hist_change_time && ) = default;
-		};	// hist_change_time
-		*/
-
 		using hist_change_time = history_entry_static<0x18, false>;
 		using hist_new_time = history_entry_static<0x18, false>;
 		using hist_pump_low_battery = history_entry_static<0x19>;
