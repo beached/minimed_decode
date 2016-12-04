@@ -158,6 +158,7 @@ namespace daw {
 			hist_temp_basal_duration & operator=( hist_temp_basal_duration && ) = default;
 		};	// hist_temp_basal_duration
 
+		/*
 		struct hist_change_time: public history_entry_static<0x17, false, 14, 9> {
 			boost::posix_time::ptime m_old_timestamp;
 
@@ -169,17 +170,23 @@ namespace daw {
 			hist_change_time & operator=( hist_change_time const & ) = default;
 			hist_change_time & operator=( hist_change_time && ) = default;
 		};	// hist_change_time
+		*/
 
-
+		using hist_change_time = history_entry_static<0x18, false>;
+		using hist_new_time = history_entry_static<0x18, false>;
 		using hist_pump_low_battery = history_entry_static<0x19>;
 		using hist_battery = history_entry_static<0x1A>;
+		using hist_set_auto_off = history_entry_static<0x1B>;
 		using hist_suspend = history_entry_static<0x1E>;
 		using hist_resume = history_entry_static<0x1F>;
+		using hist_self_test = history_entry_static<0x20, false>;
 		using hist_rewind = history_entry_static<0x21>;
+		using hist_clear_settings = history_entry_static<0x22>;
 		using hist_change_child_block_enable = history_entry_static<0x23>;
 		using hist_change_max_bolus = history_entry_static<0x24>;
 		using hist_enable_disable_remote = history_entry_static<0x26, false, 21>;
 		using hist_change_max_basal = history_entry_static<0x2C>;
+		using hist_enable_bolus_wizard = history_entry_static<0x2D>;
 		using hist_change_bg_reminder_offset = history_entry_static<0x31>;
 		using hist_change_alarm_clock_time = history_entry_static<0x32, false, 14>;
 
@@ -199,6 +206,7 @@ namespace daw {
 	
 		using hist_pump_low_reservoir = history_entry_static<0x34>;
 		using hist_alarm_clock_reminder = history_entry_static<0x35>;
+		using hist_change_metre_id = history_entry_static<0x36, false, 21>;
 		using hist_questionable_3b = history_entry_static<0x3B>;
 		using hist_change_paradigm_linkid = history_entry_static<0x3C, false, 21>;
 
@@ -236,25 +244,31 @@ namespace daw {
 			virtual ~hist_change_sensor_setup( );
 		};	// hist_change_sensor_setup
 
-		struct history_change_sensor_alarms_silence_config: public history_entry_static<0x53, false, 8> {
+		using hist_restore_mysentry51 = history_entry_static<0x51>;
+		using hist_restore_mysentry52 = history_entry_static<0x52>;
+
+		struct hist_change_sensor_alarms_silence_config: public history_entry_static<0x53, false, 8> {
 			enum class silence_type_t: uint8_t { off=0, hi=1, lo=2, lo_hi=4, all=8, unknown=9 };
 			
 			silence_type_t m_silence_type;
 			uint16_t m_duration_minutes;
 			unused_bits m_unused_bits;
 
-			history_change_sensor_alarms_silence_config( data_source_t data, pump_model_t pump_model );
-			virtual ~history_change_sensor_alarms_silence_config( );
+			hist_change_sensor_alarms_silence_config( data_source_t data, pump_model_t pump_model );
+			virtual ~hist_change_sensor_alarms_silence_config( );
 
-			history_change_sensor_alarms_silence_config( history_change_sensor_alarms_silence_config const & ) = default;
-			history_change_sensor_alarms_silence_config( history_change_sensor_alarms_silence_config && ) = default;
-			history_change_sensor_alarms_silence_config & operator=( history_change_sensor_alarms_silence_config const & ) = default;
-			history_change_sensor_alarms_silence_config & operator=( history_change_sensor_alarms_silence_config && ) = default;
+			hist_change_sensor_alarms_silence_config( hist_change_sensor_alarms_silence_config const & ) = default;
+			hist_change_sensor_alarms_silence_config( hist_change_sensor_alarms_silence_config && ) = default;
+			hist_change_sensor_alarms_silence_config & operator=( hist_change_sensor_alarms_silence_config const & ) = default;
+			hist_change_sensor_alarms_silence_config & operator=( hist_change_sensor_alarms_silence_config && ) = default;
 
-		};	// history_change_sensor_alarms_silence_config 
+		};	// hist_change_sensor_alarms_silence_config 
 		
-		std::ostream & operator<<( std::ostream & os, history_change_sensor_alarms_silence_config::silence_type_t const & s );
-		std::istream & operator>>( std::istream & is, history_change_sensor_alarms_silence_config::silence_type_t & s );
+		std::ostream & operator<<( std::ostream & os, hist_change_sensor_alarms_silence_config::silence_type_t const & s );
+		std::istream & operator>>( std::istream & is, hist_change_sensor_alarms_silence_config::silence_type_t & s );
+
+		using hist_restore_mysentry54 = history_entry_static<0x54, false, 64>;
+		using hist_restore_mysentry55 = history_entry_static<0x55, false, 55>;
 
 		using hist_change_sensor_rate_of_change_alert_setup = history_entry_static<0x56, false, 12>;
 		using hist_change_bolus_scroll_step_size = history_entry_static<0x57>;
@@ -306,6 +320,7 @@ namespace daw {
 			void set_links( );
 		};	// hist_unabsorbed_insulin
 
+		using hist_save_settings = history_entry_static<0x5D>;
 		using hist_change_variable_bolus = history_entry_static<0x5E>;
 		using hist_change_audio_bolus = history_entry_static<0x5F>;
 		using hist_change_bg_reminder_enable = history_entry_static<0x60>;
@@ -343,6 +358,7 @@ namespace daw {
 		using hist_change_bolus_reminder_enable = history_entry_static<0x66>;
 		using hist_change_bolus_reminder_time = history_entry_static<0x67>;
 		using hist_delete_bolus_reminder_time = history_entry_static<0x68, false, 9>;
+		using hist_bolus_reminder = history_entry_static<0x69, false, 9>;	// May be 7 in older models?
 		using hist_delete_alarm_clock_time = history_entry_static<0x6A, false, 14>;
 		using hist_model_522_result_totals = history_entry_static<0x6D, false, 44, 1, 2>;
 		using hist_sara_6e = history_entry_static<0x6E, false, 52, 1, 2>;

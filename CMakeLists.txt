@@ -21,6 +21,15 @@ else( )
 	endif( )
 endif( )
 
+externalproject_add(
+	date_prj
+	GIT_REPOSITORY "https://github.com/beached/date.git"
+	SOURCE_DIR "${CMAKE_BINARY_DIR}/dependencies/date"
+	GIT_TAG "master"
+	INSTALL_DIR "${CMAKE_BINARY_DIR}/install"
+	CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/install
+)
+
 externalproject_add( 
 	header_libraries_prj
 	GIT_REPOSITORY "https://github.com/beached/header_libraries.git"
@@ -72,14 +81,14 @@ set( HEADER_FILES
 #target_link_libraries( minimed_decode char_range parse_json ${Boost_LIBRARIES} )
 
 add_executable( minimed_decode ${HEADER_FILES} minimed_decode.cpp medtronic.cpp history_pages.cpp )
-add_dependencies( minimed_decode header_libraries_prj char_range_prj parse_json_prj )
+add_dependencies( minimed_decode header_libraries_prj date_prj char_range_prj parse_json_prj )
 target_link_libraries( minimed_decode char_range parse_json ${Boost_LIBRARIES} )
 
 add_executable( packet_decode ${HEADER_FILES} packet_decode.cpp medtronic.cpp )
-add_dependencies( packet_decode header_libraries_prj parse_json_prj char_range_prj )
+add_dependencies( packet_decode header_libraries_prj date_prj parse_json_prj char_range_prj )
 target_link_libraries( packet_decode char_range parse_json ${Boost_LIBRARIES} )
 
 add_executable( rfspy ${HEADER_FILES} rfspy.cpp serial_port.cpp )
-add_dependencies( rfspy header_libraries_prj parse_json_prj char_range_prj )
+add_dependencies( rfspy header_libraries_prj date_prj parse_json_prj char_range_prj )
 target_link_libraries( rfspy char_range parse_json ${Boost_LIBRARIES} )
 

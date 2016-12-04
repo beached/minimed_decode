@@ -98,20 +98,26 @@ namespace daw {
 				case 0x14: return "SelectBasalProfile";
 				case 0x16: return "TempBasal";	// hist_temp_basal_duration
 				case 0x17: return "ChangeTime";
+				case 0x18: return "NewTime";
 				case 0x19: return "JournalEntryPumpLowBattery";
 				case 0x1A: return "Battery";
+				case 0x1B: return "SetAutoOff";
 				case 0x1E: return "Suspend";
 				case 0x1F: return "Resume";
+				case 0x20: return "SelfTest";
 				case 0x21: return "Rewind";
+				case 0x22: return "ClearSettings";
 				case 0x23: return "ChangeChildBlockEnable";
 				case 0x24: return "ChangeMaxBolus";
 				case 0x26: return "EnableDisableRemote";
 				case 0x2C: return "ChangeMaxBasal";
+				case 0x2D: return "EnableBolusWizard";
 				case 0x31: return "ChangeBGReminderOffset";
 				case 0x32: return "ChangeAlarmClockTime";
 				case 0x33: return "TempBasal";
 				case 0x34: return "JournalEntryPumpLowReservoir";
 				case 0x35: return "AlarmClockReminder";
+				case 0x36: return "ChangeMetreID";
 				case 0x3B: return "Questionable3b";
 				case 0x3C: return "ChangeParadigmLinkID";
 				case 0x3F: return "BGReceivedPumpEvent";
@@ -119,13 +125,19 @@ namespace daw {
 				case 0x41: return "JournalEntryExerciseMarker";
 				case 0x42: return "manual_insulin_marker";
 				case 0x43: return "other_marker";
+				case 0x4F: return "ChangeBolusWizardSetup";
 				case 0x50: return "ChangeSensorSetup2";
+				case 0x51: return "RestoreMySentry51";
+				case 0x52: return "RestoreMySentry52";
 				case 0x53: return "ChangeSensorAlarmsSilenceConfig";
+				case 0x54: return "RestoreMySentry54";
+				case 0x55: return "RestoreMySentry55";
 				case 0x56: return "ChangeSensorRateOfChangeAlertSetup";
 				case 0x57: return "ChangeBolusScrollStepSize";
 				case 0x5A: return "ChangeBolusWizardSetup";
 				case 0x5B: return "BolusWizardBolusEstimate";
 				case 0x5C: return "UnabsorbedInsulin";
+				case 0x5D: return "SaveSettings";
 				case 0x5E: return "ChangeVariableBolus";
 				case 0x5F: return "ChangeAudioBolus";
 				case 0x60: return "ChangeBGReminderEnable";
@@ -137,9 +149,11 @@ namespace daw {
 				case 0x66: return "ChangeBolusReminderEnable";
 				case 0x67: return "ChangeBolusReminderTime";
 				case 0x68: return "DeleteBolusReminderTime";
+				case 0x69: return "BolusReminder";
 				case 0x6A: return "DeleteAlarmClockTime";
-				case 0x6D: return "Model522ResultTotals";
-				case 0x6E: return "Sara6E";
+				case 0x6C: return "DailyTotal515";
+				case 0x6D: return "DailyTotal522";
+				case 0x6E: return "DailyTotal523";
 				case 0x6F: return "ChangeCarbUnits";
 				case 0x7B: return "BasalProfileStart";
 				case 0x7C: return "ChangeWatchdogEnable";
@@ -166,20 +180,22 @@ namespace daw {
 				if( day < 1 || day > 31 || month < 1 || month > 12 || hour > 24 || minute > 59 || second > 60 ) {
 					std::cerr << "WARNING: Could not parse timestamp year=" << static_cast<int>(year) << " month=" << static_cast<int>(month)
 							<< " day=" << static_cast<int>(day) << " hour=" << static_cast<int>(hour) << " minute=" << static_cast<int>(minute)
-							<< " second=" << static_cast<int>(second) << "\n";
-					return boost::optional<boost::posix_time::ptime>{ };
+							<< " second=" << static_cast<int>(second);
+//					return boost::optional<boost::posix_time::ptime>{ };
+					return boost::posix_time::ptime{ boost::posix_time::min_date_time };
 				}
 				try {
 					using namespace boost::posix_time;
 					using namespace boost::gregorian;
-					ptime result { date { year, month, day }, time_duration { hour, minute, second } };
+					ptime result { boost::gregorian::date{ year, month, day }, time_duration { hour, minute, second } };
 					result = result - seconds( seconds_from_gmt( ) ); 
 					return result;
 				} catch( ... ) {
 					std::cerr << "WARNING: Could not parse timestamp year=" << static_cast<int>(year) << " month=" << static_cast<int>(month)
 							<< " day=" << static_cast<int>(day) << " hour=" << static_cast<int>(hour) << " minute=" << static_cast<int>(minute)
-							<< " second=" << static_cast<int>(second) << "\n";
-					return boost::optional<boost::posix_time::ptime>{ };
+							<< " second=" << static_cast<int>(second);
+					//return boost::optional<boost::posix_time::ptime>{ };
+					return boost::posix_time::ptime{ boost::posix_time::min_date_time };
 				}
 			}
 
@@ -197,17 +213,17 @@ namespace daw {
 				using namespace boost::gregorian;
 				if( day < 1 || day > 31 || month < 1 || month > 12 ) {
 					std::cerr << "WARNING: Could not parse date year=" << static_cast<int>(year) << " month=" << static_cast<int>(month)
-							<< " day=" << static_cast<int>(day) << "\n";
+							<< " day=" << static_cast<int>(day); 
 					return boost::optional<boost::posix_time::ptime>{ };
 				}
 				try {
 					using namespace boost::posix_time;
 					using namespace boost::gregorian;
-					ptime result { date { year, month, day } };
+					ptime result{ boost::gregorian::date{ year, month, day } };
 					return result;
 				} catch( ... ) {
 					std::cerr << "WARNING: Could not parse date year=" << static_cast<int>(year) << " month=" << static_cast<int>(month)
-							<< " day=" << static_cast<int>(day) << "\n";
+							<< " day=" << static_cast<int>(day);
 					return boost::optional<boost::posix_time::ptime>{ };
 				}
 			}
@@ -550,15 +566,17 @@ namespace daw {
 
 		hist_temp_basal_duration::~hist_temp_basal_duration( ) { }
 
+		/*
 		hist_change_time::hist_change_time( data_source_t data, pump_model_t pump_model ):
 				history_entry_static<0x17, false, 14, 9>{ std::move( data ), std::move( pump_model ) },
-				m_old_timestamp{ *parse_timestamp( data.slice( 2 ) ) } {
+				m_old_timestamp{ *parse_timestamp( data.slice( 2 ) ) }
+				{
 
 			link_timestamp( "oldTimeStamp", m_old_timestamp );
 		}
 
 		hist_change_time::~hist_change_time( ) { }
-		
+		*/	
 		namespace {
 			double calc_abs_temp_basal( uint16_t b1, uint16_t b7 ) {
 				return static_cast<double>(((b7 & 0b0000000000000111) << 8) | b1)/40.0;
@@ -609,15 +627,15 @@ namespace daw {
 			history_entry<0x5A>( std::move( data ), false, pump_model.larger ? 144 : 124, std::move( pump_model ) ) { }
 
 		namespace {
-			constexpr history_change_sensor_alarms_silence_config::silence_type_t to_silence_type_t( uint8_t const c ) {
+			constexpr hist_change_sensor_alarms_silence_config::silence_type_t to_silence_type_t( uint8_t const c ) {
 				switch( c ) {
-					case 0: return history_change_sensor_alarms_silence_config::silence_type_t::off;
-					case 1: return history_change_sensor_alarms_silence_config::silence_type_t::lo;
-					case 2: return history_change_sensor_alarms_silence_config::silence_type_t::hi;
-					case 4: return history_change_sensor_alarms_silence_config::silence_type_t::lo_hi;
-					case 8: return history_change_sensor_alarms_silence_config::silence_type_t::all;
+					case 0: return hist_change_sensor_alarms_silence_config::silence_type_t::off;
+					case 1: return hist_change_sensor_alarms_silence_config::silence_type_t::lo;
+					case 2: return hist_change_sensor_alarms_silence_config::silence_type_t::hi;
+					case 4: return hist_change_sensor_alarms_silence_config::silence_type_t::lo_hi;
+					case 8: return hist_change_sensor_alarms_silence_config::silence_type_t::all;
 					default:
-						 return history_change_sensor_alarms_silence_config::silence_type_t::unknown;
+						 return hist_change_sensor_alarms_silence_config::silence_type_t::unknown;
 				}
 			}
 			
@@ -625,7 +643,7 @@ namespace daw {
 				return ((b4 & 0b0000000011100000) << 3) | b7;
 			}
 		}
-		history_change_sensor_alarms_silence_config::history_change_sensor_alarms_silence_config( data_source_t data, pump_model_t pump_model ):
+		hist_change_sensor_alarms_silence_config::hist_change_sensor_alarms_silence_config( data_source_t data, pump_model_t pump_model ):
 				history_entry_static<0x53, false, 8>{ std::move( data ), std::move( pump_model ) },
 				m_silence_type{ to_silence_type_t( data[1] ) },
 				m_duration_minutes{ make_duration( data[4], data[7] ) },
@@ -637,9 +655,9 @@ namespace daw {
 				link_string( "unused_bits", m_unused_bits.bits );
 			}
 
-		history_change_sensor_alarms_silence_config::~history_change_sensor_alarms_silence_config( ) { }
+		hist_change_sensor_alarms_silence_config::~hist_change_sensor_alarms_silence_config( ) { }
 
-		std::ostream & operator<<( std::ostream & os, history_change_sensor_alarms_silence_config::silence_type_t const & s ) {
+		std::ostream & operator<<( std::ostream & os, hist_change_sensor_alarms_silence_config::silence_type_t const & s ) {
 			using namespace std::literals::string_literals;
 			static std::array<std::string, 10> const results = { "off"s, "hi"s, "lo"s, "unknown3"s, 
 																"lo_hi"s, "unknown5"s, "unknown6"s, "unknown7"s, 
@@ -648,15 +666,15 @@ namespace daw {
 			return os;
 		}
 
-		std::istream & operator>>( std::istream & is, history_change_sensor_alarms_silence_config::silence_type_t & s ) {
+		std::istream & operator>>( std::istream & is, hist_change_sensor_alarms_silence_config::silence_type_t & s ) {
 			using namespace std::literals::string_literals;
-			static std::unordered_map<std::string, history_change_sensor_alarms_silence_config::silence_type_t> const results = { 
-				{ "off"s, history_change_sensor_alarms_silence_config::silence_type_t::off },
-				{ "hi"s, history_change_sensor_alarms_silence_config::silence_type_t::lo },
-				{ "lo"s, history_change_sensor_alarms_silence_config::silence_type_t::hi },
-				{ "lo_hi"s, history_change_sensor_alarms_silence_config::silence_type_t::lo_hi },
-				{ "all"s, history_change_sensor_alarms_silence_config::silence_type_t::all },
-				{ "unknown"s, history_change_sensor_alarms_silence_config::silence_type_t::unknown } 
+			static std::unordered_map<std::string, hist_change_sensor_alarms_silence_config::silence_type_t> const results = { 
+				{ "off"s, hist_change_sensor_alarms_silence_config::silence_type_t::off },
+				{ "hi"s, hist_change_sensor_alarms_silence_config::silence_type_t::lo },
+				{ "lo"s, hist_change_sensor_alarms_silence_config::silence_type_t::hi },
+				{ "lo_hi"s, hist_change_sensor_alarms_silence_config::silence_type_t::lo_hi },
+				{ "all"s, hist_change_sensor_alarms_silence_config::silence_type_t::all },
+				{ "unknown"s, hist_change_sensor_alarms_silence_config::silence_type_t::unknown } 
 			};
 			std::string tmp;
 			is >> tmp;
@@ -819,20 +837,26 @@ namespace daw {
 							case 0x14: return new hist_select_basal_profile( std::forward<Args>( args )... );
 							case 0x16: return new hist_temp_basal_duration( std::forward<Args>( args )... );
 							case 0x17: return new hist_change_time( std::forward<Args>( args )... );
+							case 0x18: return new hist_new_time( std::forward<Args>( args )... );
 							case 0x19: return new hist_pump_low_battery( std::forward<Args>( args )... );
+							case 0x20: return new hist_self_test( std::forward<Args>( args )... );
 							case 0x1A: return new hist_battery( std::forward<Args>( args )... );
+							case 0x1B: return new hist_set_auto_off( std::forward<Args>( args )... );
 							case 0x1E: return new hist_suspend( std::forward<Args>( args )... );
 							case 0x1F: return new hist_resume( std::forward<Args>( args )... );
 							case 0x21: return new hist_rewind( std::forward<Args>( args )... );
+							case 0x22: return new hist_clear_settings( std::forward<Args>( args )... );
 							case 0x23: return new hist_change_child_block_enable( std::forward<Args>( args )... );
 							case 0x24: return new hist_change_max_bolus( std::forward<Args>( args )... );
 							case 0x26: return new hist_enable_disable_remote( std::forward<Args>( args )... );
 							case 0x2C: return new hist_change_max_basal( std::forward<Args>( args )... );
+							case 0x2D: return new hist_enable_bolus_wizard( std::forward<Args>( args )... );
 							case 0x31: return new hist_change_bg_reminder_offset( std::forward<Args>( args )... );
 							case 0x32: return new hist_change_alarm_clock_time( std::forward<Args>( args )... );
 							case 0x33: return new hist_temp_basal( std::forward<Args>( args )... );
 							case 0x34: return new hist_pump_low_reservoir( std::forward<Args>( args )... );
 							case 0x35: return new hist_alarm_clock_reminder( std::forward<Args>( args )... );
+							case 0x36: return new hist_change_metre_id( std::forward<Args>( args )... );
 							case 0x3B: return new hist_questionable_3b( std::forward<Args>( args )... );
 							case 0x3C: return new hist_change_paradigm_linkid( std::forward<Args>( args )... );
 							case 0x3F: return new hist_bg_received( std::forward<Args>( args )... );
@@ -841,12 +865,17 @@ namespace daw {
 							case 0x42: return new hist_manual_insulin_marker( std::forward<Args>( args )... );
 							case 0x43: return new hist_other_marker( std::forward<Args>( args )... );
 							case 0x50: return new hist_change_sensor_setup( std::forward<Args>( args )... );
-							case 0x53: return new history_change_sensor_alarms_silence_config( std::forward<Args>( args )... );
+							case 0x51: return new hist_restore_mysentry51( std::forward<Args>( args )... );
+							case 0x52: return new hist_restore_mysentry52( std::forward<Args>( args )... );
+							case 0x53: return new hist_change_sensor_alarms_silence_config( std::forward<Args>( args )... );
+							case 0x54: return new hist_restore_mysentry54( std::forward<Args>( args )... );
+							case 0x55: return new hist_restore_mysentry55( std::forward<Args>( args )... );
 							case 0x56: return new hist_change_sensor_rate_of_change_alert_setup( std::forward<Args>( args )... );
 							case 0x57: return new hist_change_bolus_scroll_step_size( std::forward<Args>( args )... );
 							case 0x5A: return new hist_change_bolus_wizard_setup( std::forward<Args>( args )... );
 							case 0x5B: return new hist_bolus_wizard_estimate( std::forward<Args>( args )... );
 							case 0x5C: return new hist_unabsorbed_insulin( std::forward<Args>( args )... );
+							case 0x5D: return new hist_save_settings( std::forward<Args>( args )... );
 							case 0x5E: return new hist_change_variable_bolus( std::forward<Args>( args )... );
 							case 0x5F: return new hist_change_audio_bolus( std::forward<Args>( args )... );
 							case 0x60: return new hist_change_bg_reminder_enable( std::forward<Args>( args )... );
@@ -858,6 +887,7 @@ namespace daw {
 							case 0x66: return new hist_change_bolus_reminder_enable( std::forward<Args>( args )... );
 							case 0x67: return new hist_change_bolus_reminder_time( std::forward<Args>( args )... );
 							case 0x68: return new hist_delete_bolus_reminder_time( std::forward<Args>( args )... );
+							case 0x69: return new hist_bolus_reminder( std::forward<Args>( args )... );
 							case 0x6A: return new hist_delete_alarm_clock_time( std::forward<Args>( args )... );
 							case 0x6D: return new hist_model_522_result_totals( std::forward<Args>( args )... );
 							case 0x6E: return new hist_sara_6e( std::forward<Args>( args )... );
@@ -868,7 +898,9 @@ namespace daw {
 							case 0x81: return new hist_change_watch_dog_marriage_profile( std::forward<Args>( args )... );
 							case 0x82: return new hist_delete_other_device_id( std::forward<Args>( args )... );
 							case 0x83: return new hist_change_capture_event_enable( std::forward<Args>( args )... );
-							default: return nullptr;
+							default:
+									   std::cerr << "Unknown opcode(" << std::hex << static_cast<int>(op_code) << ") ";
+									   return nullptr;
 					}
 				}( std::forward<Args>(arg)... ) );
 			}

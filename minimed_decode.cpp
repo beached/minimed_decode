@@ -126,7 +126,10 @@ int main( int argc, char** argv ) {
 
 	std::cout << "{ \"values\": [\n";
 	bool first = true;
+	auto buff_backup = std::cerr.rdbuf( );	
 	while( !range.at_end( ) ) {
+		std::stringstream ss_err;
+		std::cerr.rdbuf( ss_err.rdbuf( ) );
 		auto item = daw::history::create_history_entry( range, pump_model, pos );
 
 		if( item ) {
@@ -160,14 +163,18 @@ int main( int argc, char** argv ) {
 				if( first ) {
 					first = false;
 				} else {
-					std::cout << ",";
+					std::cerr << ",";
 				}
-				std::cout << "{ \"loc\": \"" << std::dec << std::dec << (pos-offset)+1 << "/" << data.size( ) << "\", " << item->to_string( ) << "}";
+				std::cerr << "{ \"loc\": \"" << std::dec << std::dec << (pos-offset)+1 << "/" << data.size( ) << "\", " << item->to_string( ) << "}";
 				entries.push_back( std::move( item ) );
 			}
 		}
+		if( ss_err.tellp( ) != 0 ) {
+			std::cout << ss_err.str( );
+		}
 		std::cout << "\n";
 	}
+	std::cerr.rdbuf( buff_backup );
 	std::cout << "]}\n\n";
 	return EXIT_SUCCESS;
 }
