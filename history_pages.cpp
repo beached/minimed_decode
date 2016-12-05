@@ -96,7 +96,7 @@ namespace daw {
 				case 0x0B: return "AlarmSensor"; 
 				case 0x0C: return "ClearAlarm";
 				case 0x14: return "SelectBasalProfile";
-				case 0x16: return "TempBasal";	// hist_temp_basal_duration
+				case 0x16: return "TempBasalDuration";	// hist_temp_basal_duration
 				case 0x17: return "ChangeTime";
 				case 0x18: return "NewTime";
 				case 0x19: return "JournalEntryPumpLowBattery";
@@ -114,7 +114,7 @@ namespace daw {
 				case 0x2D: return "EnableBolusWizard";
 				case 0x31: return "ChangeBGReminderOffset";
 				case 0x32: return "ChangeAlarmClockTime";
-				case 0x33: return "TempBasal";
+				case 0x33: return "TempBasalDose";
 				case 0x34: return "JournalEntryPumpLowReservoir";
 				case 0x35: return "AlarmClockReminder";
 				case 0x36: return "ChangeMetreID";
@@ -180,7 +180,7 @@ namespace daw {
 				if( day < 1 || day > 31 || month < 1 || month > 12 || hour > 24 || minute > 59 || second > 60 ) {
 					std::cerr << "WARNING: Could not parse timestamp year=" << static_cast<int>(year) << " month=" << static_cast<int>(month)
 							<< " day=" << static_cast<int>(day) << " hour=" << static_cast<int>(hour) << " minute=" << static_cast<int>(minute)
-							<< " second=" << static_cast<int>(second);
+							<< " second=" << static_cast<int>(second) << '\n';
 //					return boost::optional<boost::posix_time::ptime>{ };
 					return boost::posix_time::ptime{ boost::posix_time::min_date_time };
 				}
@@ -193,7 +193,7 @@ namespace daw {
 				} catch( ... ) {
 					std::cerr << "WARNING: Could not parse timestamp year=" << static_cast<int>(year) << " month=" << static_cast<int>(month)
 							<< " day=" << static_cast<int>(day) << " hour=" << static_cast<int>(hour) << " minute=" << static_cast<int>(minute)
-							<< " second=" << static_cast<int>(second);
+							<< " second=" << static_cast<int>(second) << '\n';
 					//return boost::optional<boost::posix_time::ptime>{ };
 					return boost::posix_time::ptime{ boost::posix_time::min_date_time };
 				}
@@ -213,7 +213,7 @@ namespace daw {
 				using namespace boost::gregorian;
 				if( day < 1 || day > 31 || month < 1 || month > 12 ) {
 					std::cerr << "WARNING: Could not parse date year=" << static_cast<int>(year) << " month=" << static_cast<int>(month)
-							<< " day=" << static_cast<int>(day); 
+							<< " day=" << static_cast<int>(day) << '\n'; 
 					return boost::optional<boost::posix_time::ptime>{ };
 				}
 				try {
@@ -223,7 +223,7 @@ namespace daw {
 					return result;
 				} catch( ... ) {
 					std::cerr << "WARNING: Could not parse date year=" << static_cast<int>(year) << " month=" << static_cast<int>(month)
-							<< " day=" << static_cast<int>(day);
+							<< " day=" << static_cast<int>(day) << '\n';
 					return boost::optional<boost::posix_time::ptime>{ };
 				}
 			}
@@ -276,12 +276,12 @@ namespace daw {
 				m_timestamp{ parse_timestamp_in_array( data, m_timestamp_offset, m_timestamp_size ) }, 
 				m_timezone_offset_minutes{ static_cast<int32_t>(seconds_from_gmt( )/60) } {
 
-			link_integral( "_op_code", m_op_code );
+			link_hex_value( "_op_code", m_op_code );
 			if( !is_decoded ) {
 				link_integral( "size", m_size );
 				link_integral( "timestamp_offset", m_timestamp_offset );
 				link_integral( "timestamp_size", m_timestamp_size );
-				link_array( "rawData", m_data );
+				link_hex_array( "rawData", m_data );
 			}
 			link_timestamp( "_timestamp", m_timestamp );
 			link_integral( "_tz_offset_min",  m_timezone_offset_minutes );
@@ -298,12 +298,12 @@ namespace daw {
 				m_timestamp{ std::move( other.m_timestamp ) },
 				m_timezone_offset_minutes{ std::move( other.m_timezone_offset_minutes ) } {
 
-			link_integral( "_op_code", m_op_code );
+			link_hex_value( "_op_code", m_op_code );
 			if( other.is_linked( "size" ) ) {
 				link_integral( "size", m_size );
 				link_integral( "timestamp_offset", m_timestamp_offset );
 				link_integral( "timestamp_size", m_timestamp_size );
-				link_array( "rawData", m_data );
+				link_hex_array( "rawData", m_data );
 			}
 			link_timestamp( "_timestamp", m_timestamp );
 			link_integral( "_tz_offset_min",  m_timezone_offset_minutes );
@@ -320,7 +320,7 @@ namespace daw {
 				m_timestamp{ other.m_timestamp },
 				m_timezone_offset_minutes{ other.m_timezone_offset_minutes } {
 
-			link_integral( "_op_code", m_op_code );
+			link_hex_value( "_op_code", m_op_code );
 			if( other.is_linked( "size" ) ) {
 				link_integral( "size", m_size );
 				link_integral( "timestamp_offset", m_timestamp_offset );
@@ -573,7 +573,7 @@ namespace daw {
 
 		}
 
-		hist_temp_basal::hist_temp_basal( data_source_t data, pump_model_t pump_model ):
+		hist_temp_basal_dose::hist_temp_basal_dose( data_source_t data, pump_model_t pump_model ):
 				history_entry_static<0x33, true, 8>{ std::move( data ), std::move( pump_model ) },
 				m_rate_type{ (data[7] >> 3) == 0 ? "absolute" : "percent" },
 				m_rate{ (data[7] >> 3) == 0 ? calc_abs_temp_basal( data[1], data[7] ) : static_cast<double>(data[1]) },
@@ -584,7 +584,7 @@ namespace daw {
 			link_string( "unused_bits", m_unused_bits.bits );
 		}
 
-		hist_temp_basal::~hist_temp_basal( ) { }
+		hist_temp_basal_dose::~hist_temp_basal_dose( ) { }
 
 		hist_basal_profile_start::hist_basal_profile_start( data_source_t data, pump_model_t pump_model ):
 				history_entry_static<0x7B, true, 10>{ std::move( data ), std::move( pump_model ) },
@@ -842,7 +842,7 @@ namespace daw {
 							case 0x2D: return new hist_enable_bolus_wizard( std::forward<Args>( args )... );
 							case 0x31: return new hist_change_bg_reminder_offset( std::forward<Args>( args )... );
 							case 0x32: return new hist_change_alarm_clock_time( std::forward<Args>( args )... );
-							case 0x33: return new hist_temp_basal( std::forward<Args>( args )... );
+							case 0x33: return new hist_temp_basal_dose( std::forward<Args>( args )... );
 							case 0x34: return new hist_pump_low_reservoir( std::forward<Args>( args )... );
 							case 0x35: return new hist_alarm_clock_reminder( std::forward<Args>( args )... );
 							case 0x36: return new hist_change_metre_id( std::forward<Args>( args )... );
@@ -888,7 +888,7 @@ namespace daw {
 							case 0x82: return new hist_delete_other_device_id( std::forward<Args>( args )... );
 							case 0x83: return new hist_change_capture_event_enable( std::forward<Args>( args )... );
 							default:
-									   std::cerr << "Unknown opcode(" << std::hex << static_cast<int>(op_code) << ") ";
+									   std::cerr << "Unknown opcode(" << std::hex << static_cast<int>(op_code) << ")\n";
 									   return nullptr;
 					}
 				}( std::forward<Args>(arg)... ) );

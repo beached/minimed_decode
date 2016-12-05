@@ -170,7 +170,7 @@ int main( int argc, char** argv ) {
 			}
 		}
 		if( ss_err.tellp( ) != 0 ) {
-			std::cout << ss_err.str( );
+			std::cout << '\n' << ss_err.str( );
 		}
 		std::cout << "\n";
 	}

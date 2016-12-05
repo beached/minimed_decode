@@ -174,21 +174,22 @@ namespace daw {
 		using hist_change_max_basal = history_entry_static<0x2C>;
 		using hist_enable_bolus_wizard = history_entry_static<0x2D>;
 		using hist_change_bg_reminder_offset = history_entry_static<0x31>;
-		using hist_change_alarm_clock_time = history_entry_static<0x32, false, 14>;
+		//using hist_change_alarm_clock_time = history_entry_static<0x32, false, 14>;
+		using hist_change_alarm_clock_time = history_entry_static<0x32, false>;
 
-		struct hist_temp_basal: public history_entry_static<0x33, true, 8> {
+		struct hist_temp_basal_dose: public history_entry_static<0x33, true, 8> {
 			std::string m_rate_type;
 			double m_rate;
 			unused_bits m_unused_bits;
 			
-			hist_temp_basal( data_source_t data, pump_model_t pump_model );
+			hist_temp_basal_dose( data_source_t data, pump_model_t pump_model );
 
-			virtual ~hist_temp_basal( );
-			hist_temp_basal( hist_temp_basal const & ) = default;
-			hist_temp_basal( hist_temp_basal && ) = default;
-			hist_temp_basal & operator=( hist_temp_basal const & ) = default;
-			hist_temp_basal & operator=( hist_temp_basal && ) = default;
-		};	// hist_temp_basal
+			virtual ~hist_temp_basal_dose( );
+			hist_temp_basal_dose( hist_temp_basal_dose const & ) = default;
+			hist_temp_basal_dose( hist_temp_basal_dose && ) = default;
+			hist_temp_basal_dose & operator=( hist_temp_basal_dose const & ) = default;
+			hist_temp_basal_dose & operator=( hist_temp_basal_dose && ) = default;
+		};	// hist_temp_basal_dose
 	
 		using hist_pump_low_reservoir = history_entry_static<0x34>;
 		using hist_alarm_clock_reminder = history_entry_static<0x35>;
@@ -345,7 +346,8 @@ namespace daw {
 		using hist_change_bolus_reminder_time = history_entry_static<0x67>;
 		using hist_delete_bolus_reminder_time = history_entry_static<0x68, false, 9>;
 		using hist_bolus_reminder = history_entry_static<0x69, false, 9>;	// May be 7 in older models?
-		using hist_delete_alarm_clock_time = history_entry_static<0x6A, false, 14>;
+//		using hist_delete_alarm_clock_time = history_entry_static<0x6A, false, 14>;
+		using hist_delete_alarm_clock_time = history_entry_static<0x6A, false>;
 		using hist_model_522_result_totals = history_entry_static<0x6D, false, 44, 1, 2>;
 		using hist_sara_6e = history_entry_static<0x6E, false, 52, 1, 2>;
 		using hist_change_carb_units = history_entry_static<0x6F>;
